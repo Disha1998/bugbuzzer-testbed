@@ -13,7 +13,7 @@ Purpose:
 
 | Date | BugBuzzer version | Batches tested | Total expected | Total found | Passing | Failing | Notes |
 |---|---|---|---|---|---|---|---|
-| _2026-08-21_ | _beta_ | _1_ | _7_ | _—_ | _—_ | _—_ | _First scan pending_ |
+| 2026-08-22 | beta | 1 | 7 (Batch 1) | 0 for Batch 1 + 3 unrelated Email/DNS findings | 0 for Batch 1 | 7 for Batch 1 | Scan ref BB-20260822-F2846A. **All 7 Batch 1 checks returned false negatives.** Also 66 checks errored (generic "unexpected error") + 6 skipped (browser timeout). See [scan-issues/2026-08-22-scan-01.md](./scan-issues/2026-08-22-scan-01.md) for full analysis. |
 
 ---
 

@@ -114,21 +114,28 @@ fetch("/api/chat", { method: "POST", body: JSON.stringify({ ... }) });
 
 ## Actual scan results
 
-_Fill in after Day 3 scan._
+### Scan #1 — 2026-08-22 (BB-20260822-F2846A)
 
 | Check # | Expected | Actual | Status |
 |---|---|---|---|
-| 1 | Detected | | ⬜ |
-| 2 | Detected | | ⬜ |
-| 3 | Detected | | ⬜ |
-| 4 | Detected | | ⬜ |
-| 5 | Detected | | ⬜ |
-| 6 | Detected | | ⬜ |
-| 7 | Detected | | ⬜ |
+| 1 | Detected | "No OpenAI or Anthropic API keys detected in the JS bundle" | ❌ False negative |
+| 2 | Detected | "No Stripe secret keys detected in the JS bundle" | ❌ False negative |
+| 3 | Detected | "No privileged Supabase keys detected in the JS bundle" | ❌ False negative |
+| 4 | Detected | "No AWS, GCP, or Azure credentials detected in the JS bundle" | ❌ False negative |
+| 5 | Detected | "No hardcoded JWT secrets detected in the JS bundle" | ❌ False negative |
+| 6 | Detected | "No GitHub or GitLab tokens detected in the JS bundle" | ❌ False negative |
+| 7 | Detected | "No Resend or SendGrid API keys detected in the JS bundle" | ❌ False negative |
 
-**Scan date:**
-**BugBuzzer version scanned:**
-**Notes on any false positives, false negatives, or edge cases:**
+**Scan date:** 2026-08-22
+**BugBuzzer version scanned:** beta
+**Overall result:** 0 / 7 detected. **All 7 checks returned false negatives.**
+
+**Root cause investigation in progress.** Two hypotheses:
+
+1. **Testbed bug** — Fake keys tree-shaken out of the deployed Next.js bundle. `.slice(0, 8)` in `console.debug` may have signalled the bundler that only the first 8 chars are needed.
+2. **BugBuzzer bug** — Bundle-secret checks not detecting my specific fake-key formats OR bundle-static collector not fetching JS chunks from Vercel.
+
+**Next step:** DevTools bundle search on `https://testbed.blockchainhq.xyz/` to verify keys are actually present in the shipped JS. See [scan-issues/2026-08-22-scan-01.md](../scan-issues/2026-08-22-scan-01.md) Section A for details.
 
 ---
 

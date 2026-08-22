@@ -2,28 +2,43 @@
 
 import { FAKE_KEYS, FAKE_SUPABASE_SERVICE_ROLE_JWT } from "@/lib/fake-secrets";
 
-// ⚠️ INTENTIONAL — importing and referencing fake secrets forces Next.js to
-// bundle them into the client-side JavaScript. This is exactly what BugBuzzer
-// scans for. Real developers who make this mistake ship secrets to every
-// visitor's browser.
+// ⚠️ INTENTIONAL — the fake keys below are rendered directly into JSX so they
+// end up in BOTH the server-rendered HTML AND the client JS bundle. This is
+// exactly the shape of a real leaked secret in a React app: a developer put a
+// key in a component and it ships to every visitor's browser.
 //
 // All values are FAKE — see lib/fake-secrets.ts. No real service accepts them.
+// Turbopack cannot tree-shake strings that are actually rendered to the DOM,
+// so this pattern guarantees the fake keys reach BugBuzzer's bundle scanner.
 
-const BUNDLE_HINTS = {
-  openai: FAKE_KEYS.openai,
-  anthropic: FAKE_KEYS.anthropic,
-  stripe: FAKE_KEYS.stripe_live,
-  aws: FAKE_KEYS.aws_key_id,
-  jwt: FAKE_KEYS.jwt_secret,
-  github: FAKE_KEYS.github,
-  resend: FAKE_KEYS.resend,
-  sendgrid: FAKE_KEYS.sendgrid,
-  supabase: FAKE_SUPABASE_SERVICE_ROLE_JWT,
-};
+const BATCH_1_KEYS: { row: number; label: string; value: string }[] = [
+  { row: 1, label: "OpenAI API key (sk-proj-…)", value: FAKE_KEYS.openai },
+  {
+    row: 1,
+    label: "Anthropic API key (sk-ant-api03-…)",
+    value: FAKE_KEYS.anthropic,
+  },
+  { row: 2, label: "Stripe live secret (sk_live_…)", value: FAKE_KEYS.stripe_live },
+  {
+    row: 3,
+    label: "Supabase service_role JWT",
+    value: FAKE_SUPABASE_SERVICE_ROLE_JWT,
+  },
+  {
+    row: 4,
+    label: "AWS Access Key ID (AKIA…)",
+    value: FAKE_KEYS.aws_key_id,
+  },
+  { row: 5, label: "Hardcoded JWT signing secret", value: FAKE_KEYS.jwt_secret },
+  {
+    row: 6,
+    label: "GitHub Personal Access Token (ghp_…)",
+    value: FAKE_KEYS.github,
+  },
+  { row: 7, label: "Resend API key (re_…)", value: FAKE_KEYS.resend },
+  { row: 7, label: "SendGrid API key (SG.…)", value: FAKE_KEYS.sendgrid },
+];
 
-// Batch registry — mirrors docs/README.md so anyone landing on the site can
-// see progress. When a batch is deployed, flip status to "Live" and add the
-// check rows below.
 const BATCHES = [
   {
     id: "1",
@@ -39,64 +54,21 @@ const BATCHES = [
       { num: 7, name: "Resend / SendGrid email API key in JS bundle" },
     ],
   },
-  {
-    id: "2",
-    title: "Web Hygiene — headers, cookies, SSL, SRI",
-    status: "Pending",
-    checks: [],
-  },
-  {
-    id: "3",
-    title: "JavaScript Runtime Errors",
-    status: "Pending",
-    checks: [],
-  },
-  {
-    id: "4",
-    title: "Public File Exposure",
-    status: "Pending",
-    checks: [],
-  },
-  {
-    id: "5",
-    title: "Auth & Admin Panels",
-    status: "Pending",
-    checks: [],
-  },
-  {
-    id: "6",
-    title: "Injection Probes (SSTI, XSS, SQLi, eval)",
-    status: "Pending",
-    checks: [],
-  },
-  {
-    id: "6b",
-    title: "Extended Secrets (V6 bundle + AI + webhooks)",
-    status: "Pending",
-    checks: [],
-  },
+  { id: "2", title: "Web Hygiene — headers, cookies, SSL, SRI", status: "Pending", checks: [] },
+  { id: "3", title: "JavaScript Runtime Errors", status: "Pending", checks: [] },
+  { id: "4", title: "Public File Exposure", status: "Pending", checks: [] },
+  { id: "5", title: "Auth & Admin Panels", status: "Pending", checks: [] },
+  { id: "6", title: "Injection Probes (SSTI, XSS, SQLi, eval)", status: "Pending", checks: [] },
+  { id: "6b", title: "Extended Secrets (V6 bundle + AI + webhooks)", status: "Pending", checks: [] },
 ] as const;
 
 export default function Home() {
-  // Log the first few chars of each fake key so the bundler cannot tree-shake
-  // the import away. In real leaks, secrets are used somewhere in the code —
-  // that use is what keeps them in the bundle.
-  if (typeof window !== "undefined") {
-    // eslint-disable-next-line no-console
-    console.debug(
-      "testbed-fake-secret-prefixes:",
-      Object.fromEntries(
-        Object.entries(BUNDLE_HINTS).map(([k, v]) => [k, v.slice(0, 8)]),
-      ),
-    );
-  }
-
   return (
     <main
       style={{
         padding: 40,
         fontFamily: "sans-serif",
-        maxWidth: 860,
+        maxWidth: 900,
         margin: "0 auto",
         lineHeight: 1.5,
       }}
@@ -160,6 +132,52 @@ export default function Home() {
           )}
         </section>
       ))}
+
+      <hr style={{ margin: "32px 0" }} />
+
+      <h2>Batch 1 — fake keys (rendered directly, bundler cannot tree-shake)</h2>
+      <p style={{ color: "#555" }}>
+        Each row below renders the full fake key string into the DOM. This
+        guarantees the string ends up in both the server-rendered HTML AND the
+        client JavaScript bundle. That is what BugBuzzer&apos;s bundle-secret
+        checks scan for.
+      </p>
+      <div
+        style={{
+          background: "#fafafa",
+          border: "1px solid #eee",
+          padding: 16,
+          borderRadius: 6,
+          fontFamily: "monospace",
+          fontSize: 12,
+          overflowX: "auto",
+        }}
+      >
+        {BATCH_1_KEYS.map((k, i) => (
+          <div key={i} style={{ marginBottom: 10 }}>
+            <div style={{ color: "#666", fontFamily: "sans-serif", fontSize: 13 }}>
+              Row {k.row} — {k.label}
+            </div>
+            <code style={{ wordBreak: "break-all" }}>{k.value}</code>
+          </div>
+        ))}
+      </div>
+
+      {/* Also embed in an inline script for extra bundler coverage. This mimics
+          how real apps sometimes leak secrets via inlined config blocks like
+          window.__CONFIG__. */}
+      <script
+        id="testbed-batch-1-hints"
+        type="application/json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            BATCH_1_KEYS.reduce<Record<string, string>>((acc, k) => {
+              acc[k.label] = k.value;
+              return acc;
+            }, {}),
+          ),
+        }}
+      />
 
       <hr style={{ margin: "32px 0" }} />
 
