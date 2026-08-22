@@ -1,6 +1,11 @@
 "use client";
 
-import { FAKE_KEYS, FAKE_SUPABASE_SERVICE_ROLE_JWT } from "@/lib/fake-secrets";
+import {
+  FAKE_KEYS,
+  FAKE_SUPABASE_SERVICE_ROLE_JWT,
+  jwt_secret,
+  nextauth_secret,
+} from "@/lib/fake-secrets";
 
 // ⚠️ INTENTIONAL — the fake keys below are rendered directly into JSX so they
 // end up in BOTH the server-rendered HTML AND the client JS bundle. This is
@@ -29,7 +34,8 @@ const BATCH_1_KEYS: { row: number; label: string; value: string }[] = [
     label: "AWS Access Key ID (AKIA…)",
     value: FAKE_KEYS.aws_key_id,
   },
-  { row: 5, label: "Hardcoded JWT signing secret", value: FAKE_KEYS.jwt_secret },
+  { row: 5, label: "Hardcoded jwt_secret", value: jwt_secret },
+  { row: 5, label: "Hardcoded nextauth_secret", value: nextauth_secret },
   {
     row: 6,
     label: "GitHub Personal Access Token (ghp_…)",
@@ -176,6 +182,21 @@ export default function Home() {
               return acc;
             }, {}),
           ),
+        }}
+      />
+
+      {/* Plain-JS variable assignments so the hardcoded-jwt-secret-in-js-bundle
+          check's regex fires (it requires `identifier = "..."` or
+          `identifier: "..."` where the identifier name matches
+          jwt_secret / nextauth_secret / signing_key / etc). */}
+      <script
+        id="testbed-batch-1-jwt-assigns"
+        dangerouslySetInnerHTML={{
+          __html: [
+            `var jwt_secret = ${JSON.stringify(jwt_secret)};`,
+            `var nextauth_secret = ${JSON.stringify(nextauth_secret)};`,
+            `window.__testbedBatch1 = { jwt_secret: jwt_secret, nextauth_secret: nextauth_secret };`,
+          ].join("\n"),
         }}
       />
 

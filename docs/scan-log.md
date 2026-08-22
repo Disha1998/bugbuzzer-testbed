@@ -13,7 +13,8 @@ Purpose:
 
 | Date | BugBuzzer version | Batches tested | Total expected | Total found | Passing | Failing | Notes |
 |---|---|---|---|---|---|---|---|
-| 2026-08-22 | beta | 1 | 7 (Batch 1) | 0 for Batch 1 + 3 unrelated Email/DNS findings | 0 for Batch 1 | 7 for Batch 1 | Scan ref BB-20260822-F2846A. **All 7 Batch 1 checks returned false negatives.** Also 66 checks errored (generic "unexpected error") + 6 skipped (browser timeout). See [scan-issues/2026-08-22-scan-01.md](./scan-issues/2026-08-22-scan-01.md) for full analysis. |
+| 2026-08-22 09:25 | beta | 1 (post-fix) | 7 (Batch 1) | 0 for Batch 1 + 3 Email/DNS findings | 0 for Batch 1 | 7 for Batch 1 | Scan ref BB-20260822-**24C73A**. Testbed fake keys confirmed in bundle via DevTools BEFORE this scan. **Same result as scan #1** — 7 Batch 1 false negatives, 66 errored, 8 skipped. Nirav confirmed VPS CPU exhaustion is blocking his perf fix from deploying → all symptoms consistent with infra timeouts, not logic bugs. See [scan-issues/2026-08-22-scan-02.md](./scan-issues/2026-08-22-scan-02.md). **BLOCKED on Nirav's fix.** |
+| 2026-08-22 06:40 | beta | 1 (pre-fix) | 7 (Batch 1) | 0 for Batch 1 + 3 Email/DNS findings | 0 for Batch 1 | 7 for Batch 1 | Scan ref BB-20260822-**F2846A**. Fake keys NOT in deployed bundle (Turbopack tree-shook them). Testbed side fixed after this scan. See [scan-issues/2026-08-22-scan-01.md](./scan-issues/2026-08-22-scan-01.md). |
 
 ---
 

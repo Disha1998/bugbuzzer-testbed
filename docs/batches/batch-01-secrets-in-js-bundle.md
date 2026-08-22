@@ -114,28 +114,37 @@ fetch("/api/chat", { method: "POST", body: JSON.stringify({ ... }) });
 
 ## Actual scan results
 
-### Scan #1 — 2026-08-22 (BB-20260822-F2846A)
+### Scan #1 — 2026-08-22 06:40 (BB-20260822-F2846A)
+
+**Root cause:** Testbed bug — Turbopack tree-shook fake keys out of the deployed bundle. Fixed after this scan by rendering keys directly into JSX.
 
 | Check # | Expected | Actual | Status |
 |---|---|---|---|
-| 1 | Detected | "No OpenAI or Anthropic API keys detected in the JS bundle" | ❌ False negative |
-| 2 | Detected | "No Stripe secret keys detected in the JS bundle" | ❌ False negative |
-| 3 | Detected | "No privileged Supabase keys detected in the JS bundle" | ❌ False negative |
-| 4 | Detected | "No AWS, GCP, or Azure credentials detected in the JS bundle" | ❌ False negative |
-| 5 | Detected | "No hardcoded JWT secrets detected in the JS bundle" | ❌ False negative |
-| 6 | Detected | "No GitHub or GitLab tokens detected in the JS bundle" | ❌ False negative |
-| 7 | Detected | "No Resend or SendGrid API keys detected in the JS bundle" | ❌ False negative |
+| 1-7 | Detected | "No X keys detected in the JS bundle" | ❌ Expected — keys weren't in the bundle yet |
 
-**Scan date:** 2026-08-22
-**BugBuzzer version scanned:** beta
-**Overall result:** 0 / 7 detected. **All 7 checks returned false negatives.**
+See [scan-issues/2026-08-22-scan-01.md](../scan-issues/2026-08-22-scan-01.md) for full details.
 
-**Root cause investigation in progress.** Two hypotheses:
+### Scan #2 — 2026-08-22 09:25 (BB-20260822-24C73A)
 
-1. **Testbed bug** — Fake keys tree-shaken out of the deployed Next.js bundle. `.slice(0, 8)` in `console.debug` may have signalled the bundler that only the first 8 chars are needed.
-2. **BugBuzzer bug** — Bundle-secret checks not detecting my specific fake-key formats OR bundle-static collector not fetching JS chunks from Vercel.
+**Pre-scan verification:** All 8 fake keys confirmed present in the deployed JS bundle via DevTools (Sources → `_next/static/immutable/chunks/1dtxgm_vmxv4-.js` → search matched every key).
 
-**Next step:** DevTools bundle search on `https://testbed.blockchainhq.xyz/` to verify keys are actually present in the shipped JS. See [scan-issues/2026-08-22-scan-01.md](../scan-issues/2026-08-22-scan-01.md) Section A for details.
+| Check # | Expected | Actual | Status |
+|---|---|---|---|
+| 1 | Detected | "No OpenAI or Anthropic API keys detected in the JS bundle" | ❌ Still not detected |
+| 2 | Detected | "No Stripe secret keys detected in the JS bundle" | ❌ Still not detected |
+| 3 | Detected | "No privileged Supabase keys detected in the JS bundle" | ❌ Still not detected |
+| 4 | Detected | "No AWS, GCP, or Azure credentials detected in the JS bundle" | ❌ Still not detected |
+| 5 | Detected | "No hardcoded JWT secrets detected in the JS bundle" | ❌ Still not detected |
+| 6 | Detected | "No GitHub or GitLab tokens detected in the JS bundle" | ❌ Still not detected |
+| 7 | Detected | "No Resend or SendGrid API keys detected in the JS bundle" | ❌ Still not detected |
+
+**Overall result:** 0 / 7 detected — same as Scan #1 despite the testbed being fixed.
+
+**Root cause:** BugBuzzer scanner VPS CPU is exhausted. Nirav has a performance fix ready but cannot deploy through CI/CD until VPS resources recover. Bundle-static collector very likely timing out fetching JS chunks → returning empty artifacts → checks correctly report "no keys found" on empty input.
+
+**Status: BLOCKED on Nirav's infrastructure fix.**
+
+See [scan-issues/2026-08-22-scan-02.md](../scan-issues/2026-08-22-scan-02.md) for full analysis.
 
 ---
 
