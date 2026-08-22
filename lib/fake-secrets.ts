@@ -23,8 +23,8 @@ export const FAKE_KEYS = {
 
   // Row 6 — GitHub PAT (classic)
   // regex: /\bghp_[A-Za-z0-9]{36}\b/ — EXACTLY 36 chars after ghp_
-  // Prev version was 48 chars — did NOT match. Fixed to exactly 36.
-  github: "ghp_FakeTestbedGitHubToken1234567890AbCdEfGh",
+  // Value below is exactly 36 alphanumeric chars (verified with .length).
+  github: "ghp_FakeTestbedGitHubToken12345678901234",
 
   // Row 7 — Resend
   // regex: /\bre_[A-Za-z0-9]{32,}\b/ — 32+ alphanumeric chars after re_
