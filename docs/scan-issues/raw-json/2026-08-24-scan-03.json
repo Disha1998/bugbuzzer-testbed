@@ -1,0 +1,33 @@
+{
+  "note": "Raw scan export from BugBuzzer beta for scan reference BB-20260824-F2B412. Full JSON captured verbatim in scan-03 MD analysis. This file preserved for regression checks.",
+  "scanReference": "BB-20260824-F2B412",
+  "scanId": "01a031c1-5b44-7514-9dfd-f4085ff2b412",
+  "exportedAt": "2026-08-24T03:13:38.658Z",
+  "duration": "~53 seconds (03:12:33 -> 03:13:26)",
+  "totalChecks": 121,
+  "counts": {
+    "passed": 89,
+    "failed": 7,
+    "errored": 0,
+    "skipped": 25
+  },
+  "failedCheckIds": [
+    "security-txt-missing-or-expired",
+    "hardcoded-jwt-secret-in-js-bundle",
+    "dnssec-not-configured",
+    "security-headers-missing",
+    "dkim-record-missing",
+    "dmarc-missing-or-policy-none",
+    "spf-record-missing-or-permissive"
+  ],
+  "batch1DetectionResults": {
+    "openai-anthropic-api-key-in-js-bundle": "passed (NOT detected)",
+    "stripe-secret-key-in-js-bundle": "passed (NOT detected)",
+    "supabase-service-role-key-in-js-bundle": "passed (NOT detected)",
+    "aws-gcp-azure-credentials-in-js-bundle": "passed (NOT detected)",
+    "hardcoded-jwt-secret-in-js-bundle": "failed (BOTH jwt_secret + nextauth_secret DETECTED)",
+    "github-gitlab-token-in-js-bundle": "passed (NOT detected)",
+    "resend-sendgrid-api-key-in-js-bundle": "passed (NOT detected)"
+  },
+  "rootCause": "BugBuzzer's looksLikePlaceholder filter at packages/check-sdk/src/bundle-secrets.ts:47 correctly rejects any secret value containing the substring 'fake'. All 6 rejected fake keys have 'FakeTestbed' in them. The one that succeeded (row 5 JWT secret) uses 64-char random strings without any placeholder word."
+}
