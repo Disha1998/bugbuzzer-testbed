@@ -1,0 +1,24 @@
+{
+  "note": "Raw scan export from BugBuzzer beta for scan reference BB-20260824-5B681D. Full JSON preserved for regression checks. Batch 1 marked complete after this scan.",
+  "scanReference": "BB-20260824-5B681D",
+  "scanId": "01a0320e-1484-73e5-b52f-f3ee1d5b681d",
+  "exportedAt": "2026-08-24T04:37:28.363Z",
+  "duration": "~54 seconds (04:36:21 -> 04:37:15)",
+  "totalChecks": 121,
+  "counts": {
+    "passed": 83,
+    "failed": 13,
+    "errored": 0,
+    "skipped": 25
+  },
+  "batch1DetectionResults": {
+    "openai-anthropic-api-key-in-js-bundle": "failed (6 detections: sk-proj + sk-ant-api03 x 3 sources; 4 findings shown after dedup)",
+    "stripe-secret-key-in-js-bundle": "failed (3 detections: sk_live x 3 sources; 2 findings shown after dedup)",
+    "supabase-service-role-key-in-js-bundle": "failed (3 detections: JWT with iss=supabase role=service_role ref=nvxkucnvfp; 2 findings shown after dedup)",
+    "aws-gcp-azure-credentials-in-js-bundle": "failed (3 detections: AKIA...; 2 findings shown after dedup)",
+    "hardcoded-jwt-secret-in-js-bundle": "failed (2 detections: jwt_secret entropy 5.50 + nextauth_secret entropy 5.72)",
+    "github-gitlab-token-in-js-bundle": "failed (3 detections: ghp_...; 2 findings shown after dedup)",
+    "resend-sendgrid-api-key-in-js-bundle": "failed (6 detections: re_ + SG. x 3 sources; 4 findings shown after dedup)"
+  },
+  "verdict": "All 7 Batch 1 rows fired. Zero false negatives. Zero false positives. Batch 1 complete."
+}

@@ -4,7 +4,7 @@
 **Master sheet rows:** 1, 2, 3, 4, 5, 6, 7
 **BugBuzzer checks tested:** 7
 **Date added to testbed:** 2026-08-21
-**Status:** 🟡 Partial — 1 of 7 rows detected end-to-end (row 5 JWT secret, scan #3 on 2026-08-24). 6 rows still failing because our fake values contain "FakeTestbed" → BugBuzzer's `looksLikePlaceholder` filter correctly drops them. Regenerating values as pure random strings.
+**Status:** ✅ **COMPLETE** — all 7 rows verified end-to-end in scan #4 (2026-08-24, ref BB-20260824-5B681D). 18 findings total across Batch 1 (multi-source detection: each key found in both external chunk and inline script). Zero false negatives. Zero false positives. Ready to move to Batch 2.
 
 ---
 
@@ -155,6 +155,37 @@ While the beta scanner was blocked on Nirav's VPS CPU issue, we proved the testb
 - Zero real BugBuzzer logic bugs for Batch 1 rows
 - Testbed content is correctly formatted to trigger every check
 - Any Batch 1 false negative in a future beta scan will be **infrastructure** (bundle collector failing to fetch/parse) or a **check code regression**, not a testbed issue
+
+### Scan #4 — 2026-08-24 04:36 (BB-20260824-5B681D) ✅ ALL 7 FIRED
+
+**Setup:** Testbed pushed with regenerated random fake keys (previous "FakeTestbed" values replaced with pure random garbage). Vercel redeployed. Beta scanner healthy (Nirav's fix live).
+
+| Row | Check | Findings | Sources hit |
+|---|---|---|---|
+| 1 | openai-anthropic | 4 (2 OpenAI + 2 Anthropic) | fetchedScripts[4] + inlineScripts[0] |
+| 2 | stripe-secret | 2 | fetchedScripts[4] + inlineScripts[0] |
+| 3 | supabase-service-role | 2 | fetchedScripts[4] + inlineScripts[0]; JWT decoded → `role=service_role, iss=supabase, ref=nvxkucnvfp` |
+| 4 | aws-gcp-azure | 2 (AKIA) | fetchedScripts[4] + inlineScripts[0] |
+| 5 | hardcoded-jwt-secret | 2 (jwt_secret + nextauth_secret) | inlineScripts[1]; entropy 5.50 + 5.72 |
+| 6 | github-gitlab | 2 (ghp_) | fetchedScripts[4] + inlineScripts[0] |
+| 7 | resend-sendgrid | 4 (2 SendGrid + 2 Resend) | fetchedScripts[4] + inlineScripts[0] |
+
+**Total: 18 Batch 1 findings.** All correctly identified, correctly redacted, with rich evidence (token type, fingerprint, entropy, character classes, location line:column, surrounding context, and live-probe result).
+
+**Bonus quality signals verified:**
+- Multi-source detection — same key found in multiple locations, each reported separately
+- Live credential probing — each fake key tested against provider API; all correctly returned "already rotated/revoked"
+- Complete evidence packaging — every finding has enough info to hunt down the source in a real codebase
+
+**Batch 1 status: ✅ COMPLETE.** Full analysis at [scan-issues/2026-08-24-scan-04.md](../scan-issues/2026-08-24-scan-04.md).
+
+### Scan #3 — 2026-08-24 03:12 (BB-20260824-F2B412) — infra fixed, 1 of 7 detected
+
+**Root cause of 6 misses:** Fake key values contained "FakeTestbed" → BugBuzzer's `looksLikePlaceholder` filter correctly dropped them (real leaked secrets don't say "fake"). Row 5 fired because its 64-char random values had no placeholder words.
+
+Fixed same day by regenerating all fake values as pure random strings. Re-tested in scan #4 above.
+
+Full analysis at [scan-issues/2026-08-24-scan-03.md](../scan-issues/2026-08-24-scan-03.md).
 
 ### Scan #2 — 2026-08-22 09:25 (BB-20260822-24C73A)
 
