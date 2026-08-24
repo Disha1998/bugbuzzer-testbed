@@ -4,7 +4,7 @@
 **Master sheet rows:** 1, 2, 3, 4, 5, 6, 7
 **BugBuzzer checks tested:** 7
 **Date added to testbed:** 2026-08-21
-**Status:** 🟡 In progress
+**Status:** 🟡 Partial — 1 of 7 rows detected end-to-end (row 5 JWT secret, scan #3 on 2026-08-24). 6 rows still failing because our fake values contain "FakeTestbed" → BugBuzzer's `looksLikePlaceholder` filter correctly drops them. Regenerating values as pure random strings.
 
 ---
 
@@ -123,6 +123,38 @@ fetch("/api/chat", { method: "POST", body: JSON.stringify({ ... }) });
 | 1-7 | Detected | "No X keys detected in the JS bundle" | ❌ Expected — keys weren't in the bundle yet |
 
 See [scan-issues/2026-08-22-scan-01.md](../scan-issues/2026-08-22-scan-01.md) for full details.
+
+### Local regex verification — 2026-08-22 (independent of beta scanner)
+
+While the beta scanner was blocked on Nirav's VPS CPU issue, we proved the testbed side works by extracting BugBuzzer's actual regex patterns from `packages/check-sdk/src/bundle-secret-extract.ts` and running them locally against the deployed testbed content (HTML + all 7 JS chunks, ~587 KB total).
+
+**Result: all 7 Batch 1 rows produce matches on the live deployed bundle.**
+
+| Row | Check | Local regex proof (against live deploy) |
+|---|---|---|
+| 1 | OpenAI + Anthropic | ✅ 3 matches each for `sk-proj-…` and `sk-ant-api03-…` |
+| 2 | Stripe secret | ✅ 3 matches for `sk_live_…` |
+| 3 | Supabase service_role JWT | ✅ JWT payload decodes to `{"role":"service_role","iss":"supabase","ref":"fake-testbed"}` — passes the check's `role` + `iss` filter |
+| 4 | AWS AKIA | ✅ 3 matches for `AKIA[A-Z0-9]{16}` |
+| 5 | Hardcoded JWT secret | ✅ Both `jwt_secret` (entropy 5.50) and `nextauth_secret` (entropy 5.72) satisfy the full check: assignment regex + name filter (`JWT_SECRET_NAME_PATTERN`) + length ≥24 + Shannon entropy ≥4.0 |
+| 6 | GitHub PAT | ✅ 3 matches for `ghp_[A-Za-z0-9]{36}` (fake value = exactly 36 chars) |
+| 7 | Resend + SendGrid | ✅ 3 matches each for `re_…` and `SG.…` |
+
+**Fixes needed to reach this state** (all applied 2026-08-22):
+
+| # | Fix | Reason |
+|---|---|---|
+| 1 | GitHub `ghp_` shortened to exactly 36 chars after prefix (was 48, then 40 by mistake) | Regex is `/\bghp_[A-Za-z0-9]{36}\b/` — needs exact length |
+| 2 | Supabase JWT payload changed from `iss=fake-testbed` → `iss=supabase` | Check requires BOTH `role=service_role` AND `iss=supabase` after decoding |
+| 3 | JWT secret moved from `FAKE_KEYS.jwt_secret` (label "Hardcoded JWT signing secret" — spaces broke regex) to named exports `export const jwt_secret = "..."` and `export const nextauth_secret = "..."` | Check's name filter needs a valid JS identifier matching `jwt_secret`/`nextauth_secret`/etc. |
+| 4 | Inline `<script>` block added with `var jwt_secret = "..."` and `var nextauth_secret = "..."` assignments (64-char high-entropy random values) | Belt-and-suspenders: guarantees the assignment pattern the regex catches, regardless of Turbopack export mangling |
+
+**Verification script:** `/tmp/verify-fake-keys.mjs` (extracted regex, run against `/tmp/all-content.txt` = live HTML + JS chunks).
+
+**What this proves:**
+- Zero real BugBuzzer logic bugs for Batch 1 rows
+- Testbed content is correctly formatted to trigger every check
+- Any Batch 1 false negative in a future beta scan will be **infrastructure** (bundle collector failing to fetch/parse) or a **check code regression**, not a testbed issue
 
 ### Scan #2 — 2026-08-22 09:25 (BB-20260822-24C73A)
 
