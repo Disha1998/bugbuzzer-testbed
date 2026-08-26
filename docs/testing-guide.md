@@ -8,7 +8,32 @@ This guide walks you through running a BugBuzzer scan against the deployed testb
 
 - Access to BugBuzzer beta: https://beta.bugbuzzer.com
 - The testbed is deployed and live at: https://testbed.blockchainhq.xyz
-- Latest changes are pushed to `main` and Vercel has deployed them
+- Latest changes are pushed to `main` (or a batch branch for preview) and Vercel has deployed them
+
+---
+
+## Branch-per-batch workflow (from Batch 2 onwards)
+
+Batches after Batch 1 use a branch-per-batch flow so we can test on Vercel preview URLs before touching production. Standard sequence:
+
+1. **Start from main** — `git checkout main && git pull`
+2. **Create batch branch** — `git checkout -b batch-XX-<name>` (e.g. `batch-02-web-hygiene`)
+3. **Add the batch's vulnerabilities + batch MD updates on the branch**
+4. **Push the branch** — `git push -u origin batch-XX-<name>`
+5. **Grab the Vercel preview URL** — appears in GitHub commit status within ~30 seconds, looks like `https://bugbuzzer-testbed-git-batch-XX-<hash>.vercel.app/`
+6. **Scan the preview URL** in BugBuzzer beta — iterate on the branch until every row in the batch fires (0 FP, 0 FN)
+7. **Open PR to main + merge** once green
+8. **Tag the merge commit** — `git tag batch-XX-complete && git push --tags` — makes regression bisecting easier later
+9. **One final confirmation scan against `https://testbed.blockchainhq.xyz/`** (production) — verify DNS-based checks still fire on the real domain
+10. **Update batch MD status to ✅ Complete + move to next batch branch**
+
+**Note on preview URL vs production URL:**
+
+Preview URLs are on `*.vercel.app`, not `blockchainhq.xyz`. Any check that reads DNS records for the domain (DMARC, SPF, DKIM, DNSSEC) will scan Vercel's records, not yours. So domain-related findings will differ between preview and production scans. Always do the final confirmation scan on `testbed.blockchainhq.xyz` after merging.
+
+**Batch 1 exception:** Batch 1 was merged directly to main before this workflow was established. It's the reference for "done via direct-to-main". Every batch from Batch 2 onwards uses the branch flow above.
+
+---
 
 ---
 

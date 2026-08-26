@@ -24,6 +24,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <meta name="robots" content="noindex,nofollow" />
+      {/* Row 88 — CDN script loaded without integrity= attribute (SRI missing). */}
+      <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" async />
 
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

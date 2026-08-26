@@ -208,6 +208,16 @@ export default function Home() {
         every listed check fires. Findings are tracked in the batch MD files
         under <code>docs/batches/</code> in the repo.
       </p>
+
+      {/* Row 24 — mixed content: HTTPS page loading an http:// image. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="http://example.com/testbed-mixed-content.png"
+        alt="mixed content test"
+        width={1}
+        height={1}
+        style={{ position: "absolute", left: -9999, top: -9999 }}
+      />
     </main>
   );
 }
