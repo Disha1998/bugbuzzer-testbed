@@ -45,11 +45,23 @@ const BATCH_1_KEYS: { row: number; label: string; value: string }[] = [
   { row: 7, label: "SendGrid API key (SG.…)", value: FAKE_KEYS.sendgrid },
 ];
 
+// Batch status semantics (matches docs/README.md legend):
+//   Pending    - not deployed yet
+//   Live       - deployed, waiting for scan to confirm every row fires
+//   Complete   - deployed AND scan verified every row fires correctly
+//   Regression - was Complete, now some rows are failing
+const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
+  Pending: { bg: "#eee", color: "#666" },
+  Live: { bg: "#fff3cd", color: "#856404" },
+  Complete: { bg: "#dfd", color: "#060" },
+  Regression: { bg: "#f8d7da", color: "#721c24" },
+};
+
 const BATCHES = [
   {
     id: "1",
     title: "Secrets in JS Bundle (core 7)",
-    status: "Live",
+    status: "Complete",
     checks: [
       { num: 1, name: "OpenAI / Anthropic API key exposed in JS bundle" },
       { num: 2, name: "Stripe secret key in JS bundle" },
@@ -131,8 +143,8 @@ export default function Home() {
                 marginLeft: 8,
                 padding: "2px 8px",
                 borderRadius: 4,
-                background: batch.status === "Live" ? "#dfd" : "#eee",
-                color: batch.status === "Live" ? "#060" : "#666",
+                background: (STATUS_STYLES[batch.status] ?? STATUS_STYLES.Pending).bg,
+                color: (STATUS_STYLES[batch.status] ?? STATUS_STYLES.Pending).color,
               }}
             >
               {batch.status}

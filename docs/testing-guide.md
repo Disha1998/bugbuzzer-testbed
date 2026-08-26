@@ -26,7 +26,15 @@ Batches after Batch 1 use a branch-per-batch flow so we can test on Vercel previ
 8. **Open PR to main + merge** once green
 9. **Tag the merge commit** — `git tag batch-XX-complete && git push --tags` — makes regression bisecting easier later
 10. **One final confirmation scan against `https://testbed.blockchainhq.xyz/`** (production) — verify DNS-based checks still fire on the real domain
-11. **Update batch MD status to ✅ Complete + move to next batch branch**
+11. **Promote BATCHES[n].status from "Live" → "Complete" in app/page.tsx** — commit + push. This is the ONLY signal on the deployed testbed that a batch has passed scan verification, not just been deployed.
+12. **Update batch MD status to ✅ Complete + move to next batch branch**
+
+**Status semantics for the BATCHES array** (4 states, matches `docs/README.md` legend):
+
+- **Pending** — batch not deployed yet (gray badge)
+- **Live** — deployed, awaiting scan confirmation (yellow badge)
+- **Complete** — deployed AND scan verified every row fires (green badge)
+- **Regression** — was Complete, now some rows failing (red badge)
 
 **Note on preview URL vs production URL:**
 
