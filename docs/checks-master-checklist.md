@@ -9,12 +9,13 @@ _Last updated: 2026-08-31_
 | Status | Count | Meaning |
 |---|---|---|
 | ✅ Verified | 38 | Check fires correctly on our testbed (scan confirmed) |
+| 🚀 Live | 5 | Deployed to testbed, awaiting first scan to confirm firing |
 | 🟡 Open fix | 2 | Check should fire but doesn't yet — needs testbed code fix |
-| ⬜ Pending | 59 | Batch not started yet, will be built in Phase A |
+| ⬜ Pending | 54 | Batch not started yet, will be built in Phase A |
 | ⏸️ Phase B | 22 | Deferred to Phase B (needs VPS / throwaway domain / cloud accounts) |
 | **Total** | **121** | Should equal 121 |
 
-**Countdown:** 38 of 121 verified (31%)
+**Countdown:** 38 of 121 verified (31%). 5 more will move to verified after the next Batch 3 scan.
 
 ## Batch 1 — Secrets in JS Bundle (7 checks)
 
@@ -49,11 +50,11 @@ _Last updated: 2026-08-31_
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `critical-page-blank-or-error` | ⬜ Pending |  |
-| 2 | `failed-network-requests` | ⬜ Pending |  |
-| 3 | `hydration-errors-detected` | ⬜ Pending |  |
-| 4 | `js-exception-regression` | ⬜ Pending |  |
-| 5 | `js-exceptions-detected` | ⬜ Pending |  |
+| 1 | `critical-page-blank-or-error` | 🚀 Live | Scan `/broken` URL separately (not homepage) |
+| 2 | `failed-network-requests` | 🚀 Live | Fetches `/api/does-not-exist-batch-3` on load |
+| 3 | `hydration-errors-detected` | 🚀 Live | Server/client `Date.now()` mismatch |
+| 4 | `js-exception-regression` | 🚀 Live | Fires ONCE on first scan after deploy, then goes back to passing |
+| 5 | `js-exceptions-detected` | 🚀 Live | Async `throw new Error` in setTimeout |
 
 ## Batch 4 — Public File Exposure (8 checks)
 

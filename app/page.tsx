@@ -6,6 +6,7 @@ import {
   jwt_secret,
   nextauth_secret,
 } from "@/lib/fake-secrets";
+import { Batch3RuntimeVulns } from "@/components/batch-3-runtime-vulns";
 
 // ⚠️ INTENTIONAL — the fake keys below are rendered directly into JSX so they
 // end up in BOTH the server-rendered HTML AND the client JS bundle. This is
@@ -88,7 +89,18 @@ const BATCHES = [
       { num: 9, name: "Subresource Integrity (SRI) missing on CDN script" },
     ],
   },
-  { id: "3", title: "JavaScript Runtime Errors", status: "Pending", checks: [] },
+  {
+    id: "3",
+    title: "JavaScript Runtime Errors",
+    status: "Live",
+    checks: [
+      { num: 1, name: "JavaScript exception thrown on page load" },
+      { num: 2, name: "New JS error since last scan (regression check)" },
+      { num: 3, name: "Failed network request on page load (404)" },
+      { num: 4, name: "React / Next.js hydration mismatch" },
+      { num: 5, name: "Critical page blank or error (scan /broken separately)" },
+    ],
+  },
   { id: "4", title: "Public File Exposure", status: "Pending", checks: [] },
   { id: "5", title: "Auth & Admin Panels", status: "Pending", checks: [] },
   { id: "6", title: "Injection Probes (SSTI, XSS, SQLi, eval)", status: "Pending", checks: [] },
@@ -245,6 +257,9 @@ export default function Home() {
         height={1}
         style={{ position: "absolute", left: -9999, top: -9999 }}
       />
+
+      {/* Batch 3 — runtime vulnerabilities (JS error, failed fetch, hydration mismatch). */}
+      <Batch3RuntimeVulns />
     </main>
   );
 }

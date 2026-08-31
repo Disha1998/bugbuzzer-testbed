@@ -14,7 +14,7 @@ Progress through the master sheet's 121 checks, one small batch at a time.
 |---|---|---|---|---|
 | 1 | Secrets in JS bundle (core 7) | 7 | ✅ Complete (scan #4, 7/7 detected) | [batch-01](./batches/batch-01-secrets-in-js-bundle.md) |
 | 2 | Web hygiene (headers, cookies, SSL, SRI) | 11 | 🟡 In progress — 8 doable now, 3 deferred to Phase B | [batch-02](./batches/batch-02-web-hygiene.md) |
-| 3 | JavaScript runtime errors | 5 | ⬜ Pending | [batch-03](./batches/batch-03-js-runtime-errors.md) |
+| 3 | JavaScript runtime errors | 5 | 🚀 Live (deployed, awaiting first scan) | [batch-03](./batches/batch-03-js-runtime-errors.md) |
 | 4 | Public file exposure | 8 | ⬜ Pending | [batch-04](./batches/batch-04-public-file-exposure.md) |
 | 5 | Auth & admin panels | 13 | ⬜ Pending | [batch-05](./batches/batch-05-auth-admin-panels.md) |
 | 6 | Injection probes (SSTI, XSS, SQLi, eval) | 8 | ⬜ Pending | [batch-06](./batches/batch-06-injection-probes.md) |
@@ -55,6 +55,7 @@ Every row deferred from Phase A gets logged to [`phase-b-backlog.md`](./phase-b-
 ## Status legend
 
 - ⬜ Pending — batch not started
-- 🟡 In progress — vulnerabilities added, verifying scan detection
+- 🚀 Live — deployed to testbed, awaiting first scan
+- 🟡 In progress — deployed and scan run, but some rows didn't fire (open fixes needed)
 - ✅ Complete — all checks in the batch detected correctly (100% pass on latest scan)
 - 🔴 Regression — a previously-passing check has started failing
