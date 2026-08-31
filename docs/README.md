@@ -42,6 +42,7 @@ Every row deferred from Phase A gets logged to [`phase-b-backlog.md`](./phase-b-
 
 ## Other docs
 
+- [**Master checklist**](./checks-master-checklist.md) — **all 121 checks in one file**, with status per check. Read this first to see what's done, pending, or missing
 - [Scan log](./scan-log.md) — every scan run + result
 - [Testing guide](./testing-guide.md) — how to run BugBuzzer against this testbed + branch-per-batch workflow
 - [Phase B backlog](./phase-b-backlog.md) — every deferred row with resource-specific setup steps
