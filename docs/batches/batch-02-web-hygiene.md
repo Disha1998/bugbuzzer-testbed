@@ -1,5 +1,20 @@
 # Batch 2 — Web Hygiene (Headers, Cookies, SSL, SRI)
 
+## 📋 Status at a glance — 2026-08-26
+
+**Batch complete? NO ❌**
+- **7 of 9 rows firing correctly** (77%)
+- **2 open issues (need testbed code fix):**
+  1. **Row 24 — mixed-content-on-https-page** — our `<img src="http://...">` is auto-upgraded by Chrome before the scanner observes it. Fix: switch to `<script src="http://...">` (blocked, not upgraded, leaves a browser-console signal the scanner catches)
+  2. **Row 28 — cors-misconfiguration-overly-permissive** — the `/api/wide-cors` route returns the misconfig correctly but nothing on the main page references it, so the scanner never discovers + tests it. Fix: add `<a href="/api/wide-cors">` link + `fetch("/api/wide-cors")` on-load call
+
+Plus **3 rows deferred to Phase B** (SSL cert expiry / domain expiry / subdomain takeover — need Hostinger VPS + throwaway domain). Tracked in [phase-b-backlog.md](../phase-b-backlog.md).
+
+Last scan: BB-20260826-E71978 (2026-08-26). 15 Batch 2 findings + 18 Batch 1 findings + 4 environmental + 8 lodash CVEs (bonus) = 45 total findings. Full FP/FN audit: no strict false positives.
+
+---
+
+
 **Category:** Web Hygiene — headers, cookies, SSL, DNS, SRI
 **Master sheet rows:** 19, 20, 21, 24, 28, 30, 50, 53, 54, 55, 88
 **BugBuzzer checks tested:** 11 total (2 free, 6 add-code, 1 bonus, 3 deferred to Phase B)

@@ -36,6 +36,34 @@ Batches after Batch 1 use a branch-per-batch flow so we can test on Vercel previ
 - **Complete** — deployed AND scan verified every row fires (green badge)
 - **Regression** — was Complete, now some rows failing (red badge)
 
+---
+
+## Every batch MD needs a "Status at a glance" block at the top
+
+Every `docs/batches/batch-XX-*.md` file MUST start with a 3-line status block right after the h1 title. A reader should know if the batch needs attention in 3 seconds — without reading the whole doc.
+
+**Format:**
+
+```markdown
+# Batch X — <title>
+
+## 📋 Status at a glance — YYYY-MM-DD
+
+**Batch complete? YES ✅ / NO ❌**
+- N of M rows firing correctly (%)
+- N open issues (or "0 open issues" if clean)
+
+If open issues > 0, list each with a 1-line fix:
+1. **Row X — check-name** — why it's not firing, planned fix
+2. ...
+
+Last scan: BB-YYYYMMDD-XXXXX (YYYY-MM-DD). N total findings. Link to scan-issue MD.
+
+---
+```
+
+Update this block after every scan run against the batch. See [`batch-01`](./batches/batch-01-secrets-in-js-bundle.md) (all rows firing) and [`batch-02`](./batches/batch-02-web-hygiene.md) (2 open issues) for live examples.
+
 **Note on preview URL vs production URL:**
 
 Preview URLs are on `*.vercel.app`, not `blockchainhq.xyz`. Any check that reads DNS records for the domain (DMARC, SPF, DKIM, DNSSEC) will scan Vercel's records, not yours. So domain-related findings will differ between preview and production scans. Always do the final confirmation scan on `testbed.blockchainhq.xyz` after merging.
