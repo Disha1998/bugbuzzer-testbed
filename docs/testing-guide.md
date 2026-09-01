@@ -12,9 +12,29 @@ This guide walks you through running a BugBuzzer scan against the deployed testb
 
 ---
 
-## Branch-per-batch workflow (from Batch 2 onwards)
+## Direct-to-main workflow (from Batch 4 onwards)
 
-Batches after Batch 1 use a branch-per-batch flow so we can test on Vercel preview URLs before touching production. Standard sequence:
+**Decision 2026-09-01:** we work on `main` directly, no per-batch branches. Reason: Vercel preview URLs are gated by Vercel Authentication (bot protection + login-required for previews on our plan), so preview URL testing was never actually possible on this project. Merge-to-main was going to happen anyway → just skip the branch step.
+
+Standard sequence:
+
+1. Confirm you're on main and clean — `git status`
+2. Pull latest — `git pull`
+3. Make the batch's code changes + doc updates directly on main
+4. Update `app/page.tsx` BATCHES array — flip `status: "Pending"` → `status: "Live"` and fill `checks: []`
+5. Review the diff — `git diff | cat`
+6. Commit + push — Vercel auto-deploys to `testbed.blockchainhq.xyz` in ~1 min
+7. Scan `https://testbed.blockchainhq.xyz/` in BugBuzzer beta
+8. If all rows fire → flip status to "Complete" in a follow-up commit + push
+9. If some rows don't fire → log in `docs/testbed-fixes-backlog.md` with Owner + Priority + Fix Steps + Verification, still move to next batch
+
+**Old branch-per-batch workflow (2026-08-26 through 2026-09-01):**
+
+Attempted for Batch 2 and Batch 3. Preview URLs were gated by Vercel Authentication so we couldn't actually test on them, defeating the point. Batches were merged to main anyway. Retired 2026-09-01.
+
+---
+
+## OLD workflow (retired) — for reference only
 
 1. **Start from main** — `git checkout main && git pull`
 2. **Create batch branch** — `git checkout -b batch-XX-<name>` (e.g. `batch-02-web-hygiene`)

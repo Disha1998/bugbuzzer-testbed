@@ -5,19 +5,21 @@
 _Last updated: 2026-09-01_
 
 > ⚠️ **Batch 3 verification blocked** (2026-08-31). Vercel bot protection returns HTTP 403 to BugBuzzer's Playwright scanner. Site is fine for normal users (curl returns 200). Batch 1 + 2 previous verifications still stand. Batch 3 rows stay 🚀 Live until unblocked. Full analysis: [scan-issues/2026-08-31-scan-blocked-vercel.md](./scan-issues/2026-08-31-scan-blocked-vercel.md).
+>
+> 🆕 **Batch 4 deployed 2026-09-01** — URL-probe based, should work even under Vercel bot protection (probes don't trigger browser fingerprint). Row 5 (source maps) additionally requires Vercel "Protected Sourcemaps" toggle OFF — see [batch-04 MD](./batches/batch-04-public-file-exposure.md) setup steps.
 
 ## Summary
 
 | Status | Count | Meaning |
 |---|---|---|
 | ✅ Verified | 38 | Check fires correctly on our testbed (scan confirmed) |
-| 🚀 Live | 5 | Deployed to testbed, awaiting first scan to confirm firing |
+| 🚀 Live | 13 | Deployed to testbed, awaiting first scan to confirm firing |
 | 🟡 Open fix | 2 | Check should fire but doesn't yet — needs testbed code fix |
-| ⬜ Pending | 54 | Batch not started yet, will be built in Phase A |
+| ⬜ Pending | 46 | Batch not started yet, will be built in Phase A |
 | ⏸️ Phase B | 22 | Deferred to Phase B (needs VPS / throwaway domain / cloud accounts) |
 | **Total** | **121** | Should equal 121 |
 
-**Countdown:** 38 of 121 verified (31%). 5 more will move to verified after the next Batch 3 scan.
+**Countdown:** 38 of 121 verified (31%). Batch 3 (5 rows) + Batch 4 (8 rows) waiting for scan verification.
 
 ## Batch 1 — Secrets in JS Bundle (7 checks)
 
@@ -62,14 +64,14 @@ _Last updated: 2026-09-01_
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `backup-files-exposed` | ⬜ Pending |  |
-| 2 | `directory-listing-exposed` | ⬜ Pending |  |
-| 3 | `env-file-exposed` | ⬜ Pending |  |
-| 4 | `exposed-config-files` | ⬜ Pending |  |
-| 5 | `exposed-docker-compose` | ⬜ Pending |  |
-| 6 | `exposed-source-maps` | ⬜ Pending |  |
-| 7 | `git-repo-exposed` | ⬜ Pending |  |
-| 8 | `svn-repo-exposed` | ⬜ Pending |  |
+| 1 | `backup-files-exposed` | 🚀 Live | Middleware serves fake `.sql` / `.zip` / `.tar.gz` at 5 attack URLs. Re-scan → should fire 1-3 findings |
+| 2 | `directory-listing-exposed` | 🚀 Live | `/downloads` renders as fake Apache "Index of /" HTML. Re-scan → should fire 1 finding |
+| 3 | `env-file-exposed` | 🚀 Live | Middleware serves fake `.env` at 4 variants (`.env`, `.env.local`, `.env.production`, `.env.development`). Re-scan → should fire 1-3 findings |
+| 4 | `exposed-config-files` | 🚀 Live | Middleware serves fake JSON at 4 config paths. Re-scan → should fire 1-2 findings |
+| 5 | `exposed-docker-compose` | 🚀 Live | Middleware serves fake compose YAML at 3 variants. Re-scan → should fire 1 finding |
+| 6 | `exposed-source-maps` | 🚀 Live | **Requires:** turn Vercel "Protected Sourcemaps" toggle OFF before scan. Then re-scan → should fire on Next.js `.js.map` files |
+| 7 | `git-repo-exposed` | 🚀 Live | Middleware serves fake `.git/config` + `HEAD` + `index`. Re-scan → should fire 1 finding |
+| 8 | `svn-repo-exposed` | 🚀 Live | Middleware serves fake `.svn/entries` + `wc.db` + `format`. Re-scan → should fire 1 finding |
 
 ## Batch 5 — Auth & Admin Panels (14 checks)
 
