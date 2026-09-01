@@ -48,14 +48,18 @@ const BATCH_1_KEYS: { row: number; label: string; value: string }[] = [
 
 // Batch status semantics (matches docs/README.md legend):
 //   Pending    - not deployed yet
-//   Live       - deployed, waiting for scan to confirm every row fires
+//   Live       - deployed, waiting for first scan to confirm every row fires
+//   Partial    - some rows verified by scan, some rows have known open fixes
+//   Blocked    - deployed but scan cannot verify (external issue like scanner block)
 //   Complete   - deployed AND scan verified every row fires correctly
 //   Regression - was Complete, now some rows are failing
 const STATUS_STYLES: Record<string, { bg: string; color: string }> = {
   Pending: { bg: "#eee", color: "#666" },
   Live: { bg: "#fff3cd", color: "#856404" },
+  Partial: { bg: "#ffe4b5", color: "#7a4900" },
+  Blocked: { bg: "#f8d7da", color: "#721c24" },
   Complete: { bg: "#dfd", color: "#060" },
-  Regression: { bg: "#f8d7da", color: "#721c24" },
+  Regression: { bg: "#f5c6cb", color: "#491217" },
 };
 
 const BATCHES = [
@@ -63,6 +67,7 @@ const BATCHES = [
     id: "1",
     title: "Secrets in JS Bundle (core 7)",
     status: "Complete",
+    statusHint: "7 of 7 verified in scan #4 (2026-08-24)",
     checks: [
       { num: 1, name: "OpenAI / Anthropic API key exposed in JS bundle" },
       { num: 2, name: "Stripe secret key in JS bundle" },
@@ -76,7 +81,8 @@ const BATCHES = [
   {
     id: "2",
     title: "Web Hygiene — headers, cookies, SSL, SRI",
-    status: "Live",
+    status: "Partial",
+    statusHint: "7 of 9 verified in scan #5 · 2 open fixes (rows 3+4) in fixes-backlog",
     checks: [
       { num: 1, name: "Security headers missing (CSP, HSTS, X-Frame, X-Content-Type, Referrer, Permissions)" },
       { num: 2, name: "security.txt file missing" },
@@ -92,7 +98,8 @@ const BATCHES = [
   {
     id: "3",
     title: "JavaScript Runtime Errors",
-    status: "Live",
+    status: "Blocked",
+    statusHint: "0 of 5 verifiable — Vercel bot protection blocks scanner (Fix A in backlog)",
     checks: [
       { num: 1, name: "JavaScript exception thrown on page load" },
       { num: 2, name: "New JS error since last scan (regression check)" },
@@ -105,6 +112,7 @@ const BATCHES = [
     id: "4",
     title: "Public File Exposure",
     status: "Live",
+    statusHint: "Just deployed, awaiting first scan · row 5 needs Vercel Protected Sourcemaps OFF",
     checks: [
       { num: 1, name: "Backup files exposed (.sql / .zip / .tar.gz)" },
       { num: 2, name: ".env file exposed at root (with fake DB/API secrets)" },
@@ -176,6 +184,11 @@ export default function Home() {
               {batch.status}
             </span>
           </h3>
+          {"statusHint" in batch && batch.statusHint ? (
+            <p style={{ margin: "6px 0 0", fontSize: 13, color: "#666" }}>
+              {batch.statusHint}
+            </p>
+          ) : null}
           {batch.checks.length > 0 ? (
             <ul style={{ marginTop: 8, marginBottom: 0 }}>
               {batch.checks.map((c) => (
