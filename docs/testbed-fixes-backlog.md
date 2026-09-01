@@ -118,6 +118,100 @@ _Last updated: 2026-09-01_
 
 ---
 
+### Fix F — Batch 4 Row 5 (exposed-source-maps) — Vercel Protected Sourcemaps still ON
+
+- **From:** Batch 4 scan #10 (2026-09-01)
+- **Owner:** Us (Disha — Vercel dashboard toggle)
+- **Priority:** 🟡 P2
+- **State:** ⬜ Open
+
+**What's wrong:** BugBuzzer probed source map URLs. Verified with curl: `_next/static/immutable/chunks/*.js.map` returns HTTP 403. Vercel's "Protected Sourcemaps" feature is ON — source maps only accessible to team members.
+
+**Fix steps:**
+1. Vercel dashboard → bugbuzzer-testbed → Settings → Deployment Protection
+2. Scroll to **"Protected Sourcemaps"** section
+3. Toggle **OFF** → Save
+4. Wait ~30 sec for change to propagate
+5. Verify with curl: `curl -sI https://testbed.blockchainhq.xyz/_next/static/immutable/chunks/<any>.js.map` should return HTTP 200
+6. Re-scan → `exposed-source-maps` should fire
+
+**Verification:** re-scan → `exposed-source-maps` fires with 1+ findings on Next.js source map files.
+
+---
+
+### Fix G — Batch 4 Rows 3 + 4 (exposed-config-files + exposed-docker-compose) — check didn't recognize content
+
+- **From:** Batch 4 scan #10 (2026-09-01)
+- **Owner:** Us
+- **Priority:** 🟡 P2
+- **State:** ⬜ Open
+
+**What's wrong:** Middleware serves `/config.json`, `/settings.json`, `/appsettings.json`, `/secrets.json` and `/docker-compose.yml`, `/docker-compose.yaml`, `/compose.yml` all as HTTP 200 with real-looking content (verified with curl). But BugBuzzer's checks passed with "No publicly accessible JSON configuration files detected" / "No publicly accessible Docker Compose config files detected".
+
+Two possibilities:
+1. BugBuzzer's checks look for specific content signatures we're not matching
+2. Response Content-Type isn't being preserved by Next.js middleware (curl showed no `content-type` header in my quick test — worth digging)
+
+**Fix steps:**
+1. Read BugBuzzer's check source: `packages/check-catalog/src/checks/http-probe/exposed-config-files.ts` and `exposed-docker-compose.ts`
+2. Look at what response pattern each check requires (Content-Type? specific JSON keys? YAML structure?)
+3. Adjust `middleware.ts` EXPOSED_FILES entries — either fix Content-Type, add missing signatures, or structure content differently
+4. Push, re-scan
+
+**Verification:** re-scan → both checks fire with expected findings.
+
+---
+
+### Fix I — Batch 4 Row 8 (directory-listing-exposed) — page rendered inside Next.js layout
+
+- **From:** Batch 4 scan #10 (2026-09-01)
+- **Owner:** Us
+- **Priority:** 🟡 P2
+- **State:** ⬜ Open
+
+**What's wrong:** `/downloads` renders "Index of /downloads" HTML but inside the Next.js root layout — creating duplicate `<html>` tags and response header shows `server: Vercel` (not `server: Apache/*`). Real directory listings come from Apache/nginx and have specific structure.
+
+Also possible: BugBuzzer's check doesn't probe `/downloads` at all — it probably probes `/uploads/`, `/files/`, `/backup/`, `/images/`, etc.
+
+**Fix steps (try in order):**
+1. Read BugBuzzer's check code: `packages/check-catalog/src/checks/http-probe/directory-listing-exposed.ts`
+2. Check what paths it probes AND what response pattern it needs
+3. Options:
+   - Serve the fake directory listing via `middleware.ts` at the URL BugBuzzer probes (bypassing Next.js layout entirely)
+   - OR add a `layout.tsx` under `app/downloads/` that just passes through `children` with no HTML wrapper
+   - OR set response headers to include `Server: Apache/2.4.52` via middleware for `/downloads`
+4. Verify with curl: response HTML is standalone (no `<!DOCTYPE html><html>` from Next.js), body starts with `<title>Index of` or `<h1>Index of`
+
+**Verification:** re-scan → `directory-listing-exposed` fires with 1 finding.
+
+---
+
+### Fix J — Report BugBuzzer bug: http-baseline collector transient errors
+
+- **From:** Batch 4 scan #10 (2026-09-01)
+- **Owner:** BugBuzzer team (Nirav)
+- **Priority:** 🟠 P3 (transient, but worth logging)
+- **State:** ⬜ Open
+
+**What's wrong:** Scan #10 had 10 checks return `status: "error"` with generic `errorMessage: "An unexpected error occurred while running this check"`. All 10 are http-baseline-collector-based:
+
+- `security-headers-missing`, `security-txt-missing-or-expired`, `server-version-disclosure`
+- `session-cookie-missing-{secure, http-only, samesite}`, `session-token-insufficient-expiration`, `jwt-weak-signing-secret`
+- `site-{returning-error-status, unreachable}`
+
+Same 10 checks worked fine in scan #5 (2026-08-26) and scan #4 (2026-08-24). Bundle-static and browser-baseline collectors both worked in scan #10 (Batch 1 and Batch 3 findings fired correctly). Only the http-baseline collector failed.
+
+Likely a transient BugBuzzer scanner-side issue with the http-baseline collector for this scan run. Batch 2 previous verifications still stand — this is not our regression.
+
+**Fix steps (message to Nirav next time we ping the team):**
+> Scan `01a05c3f-4662-79a9-9550-aba26a665cf7` on 2026-09-01 had 10 http-baseline checks return `status: "error"` with a generic "unexpected error occurred" message — while bundle-static and browser-baseline checks in the same scan worked fine. Same 10 checks passed cleanly in prior scans. Looks like a transient http-baseline collector issue. Worth checking:
+> - Was there a scanner-side incident around 2026-09-01 09:14 UTC?
+> - Is the generic `errorMessage` swallowing a real stack trace? Would help to surface the underlying cause.
+
+**Verification:** future scans should not show these 10 checks as `errored`. If it happens again, escalate.
+
+---
+
 ### Fix E — Report BugBuzzer bug: silent regression when scanner is blocked
 
 - **From:** Batch 3 scans #7-9 (2026-08-31)

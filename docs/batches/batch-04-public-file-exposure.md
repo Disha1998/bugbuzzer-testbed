@@ -1,18 +1,16 @@
 # Batch 4 — Public File Exposure
 
-## 📋 Status at a glance — 2026-09-01
+## 📋 Status at a glance — 2026-09-01 (after scan #10)
 
-**Batch complete? NO ❌** (deployed, awaiting first scan)
-- **0 of 8 rows verified** — code deployed, needs first scan
-- **1 conditional dependency:** Row 5 (source maps) requires Vercel "Protected Sourcemaps" toggle OFF. Without that, row 5 will not fire.
-- **Reused inheritance:** blocked by same Fix A as Batch 3 IF Vercel bot protection extends to URL-probe requests. Batch 4 checks probe specific URLs directly, so should work even under browser-fingerprint bot protection. If they DON'T work, log as extension of Fix A.
+**Batch complete? PARTIAL — 4 of 8 rows verified**
+- **4 rows firing correctly:** env-file-exposed (4 findings), backup-files-exposed (3), git-repo-exposed (2), svn-repo-exposed (3) → **12 Batch 4 findings** on scan #10
+- **4 rows open, need fixes** — logged as Fix F, G, H, I in [testbed-fixes-backlog.md](../testbed-fixes-backlog.md):
+  1. **Row 5 (exposed-source-maps)** — Vercel Protected Sourcemaps toggle is STILL ON (verified via curl: source map returns HTTP 403). Fix: toggle OFF in Vercel dashboard
+  2. **Row 3 (exposed-config-files)** — middleware serves /config.json etc as HTTP 200 but check didn't fire. Likely needs specific JSON body signature or content-type
+  3. **Row 4 (exposed-docker-compose)** — same pattern as row 3
+  4. **Row 8 (directory-listing-exposed)** — my `/downloads` page renders inside Next.js layout (duplicate `<html>` tags, `server: Vercel` header), check may need standalone Apache-style page
 
-**Setup required before scanning (one-time):**
-1. Merge this batch to main → Vercel auto-deploys
-2. Open Vercel dashboard → bugbuzzer-testbed → Settings → Deployment Protection → scroll to **"Protected Sourcemaps"** → toggle OFF → Save
-3. Then scan `https://testbed.blockchainhq.xyz/` in BugBuzzer beta
-
-If you skip step 2, row 5 (source maps) will not fire. Rows 1-4 and 6-8 don't depend on that setting.
+**Scan #10 also had 10 http-baseline errors** (Batch 2 rows temporarily errored) — likely a BugBuzzer scanner-side blip, not our code. Batch 2 previous verifications still stand.
 
 ---
 

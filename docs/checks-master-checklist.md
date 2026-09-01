@@ -2,24 +2,26 @@
 
 **Purpose:** one single place to track every check. Update this whenever a batch is deployed, scanned, or completed. If the totals below ever drop below 121, something got lost — this file is the safety net.
 
-_Last updated: 2026-09-01_
+_Last updated: 2026-09-01 (after scan #10)_
 
-> ⚠️ **Batch 3 verification blocked** (2026-08-31). Vercel bot protection returns HTTP 403 to BugBuzzer's Playwright scanner. Site is fine for normal users (curl returns 200). Batch 1 + 2 previous verifications still stand. Batch 3 rows stay 🚀 Live until unblocked. Full analysis: [scan-issues/2026-08-31-scan-blocked-vercel.md](./scan-issues/2026-08-31-scan-blocked-vercel.md).
+> ✅ **Batch 3 unblocked and 4/5 rows verified** (2026-09-01). Vercel bot protection didn't kick in on scan #10 — scanner reached the site and fired our planted vulnerabilities correctly. Only row 38 remaining, needs separate scan of `/broken`.
 >
-> 🆕 **Batch 4 deployed 2026-09-01** — URL-probe based, should work even under Vercel bot protection (probes don't trigger browser fingerprint). Row 5 (source maps) additionally requires Vercel "Protected Sourcemaps" toggle OFF — see [batch-04 MD](./batches/batch-04-public-file-exposure.md) setup steps.
+> 🟡 **Batch 4 partial — 4/8 verified** (2026-09-01). env / backup / git / svn all fire. 4 open fixes: source maps (Vercel toggle), config-files, docker-compose, directory-listing — see [testbed-fixes-backlog.md](./testbed-fixes-backlog.md) Fixes F-I.
+>
+> ⚠️ **Scan #10 had 10 http-baseline errors** (Batch 2 rows) — BugBuzzer scanner-side blip, not our code. Batch 2 previous verifications still stand.
 
 ## Summary
 
 | Status | Count | Meaning |
 |---|---|---|
-| ✅ Verified | 38 | Check fires correctly on our testbed (scan confirmed) |
-| 🚀 Live | 13 | Deployed to testbed, awaiting first scan to confirm firing |
-| 🟡 Open fix | 2 | Check should fire but doesn't yet — needs testbed code fix |
+| ✅ Verified | 46 | Check fires correctly on our testbed (scan confirmed) |
+| 🚀 Live | 1 | Deployed, needs additional scan of a different URL (row 38 `/broken`) |
+| 🟡 Open fix | 6 | Check should fire but doesn't yet — needs testbed code fix (Batch 2 rows + Batch 4 rows) |
 | ⬜ Pending | 46 | Batch not started yet, will be built in Phase A |
 | ⏸️ Phase B | 22 | Deferred to Phase B (needs VPS / throwaway domain / cloud accounts) |
 | **Total** | **121** | Should equal 121 |
 
-**Countdown:** 38 of 121 verified (31%). Batch 3 (5 rows) + Batch 4 (8 rows) waiting for scan verification.
+**Countdown:** 46 of 121 verified (38%). Big jump from 38 — Batch 3's 4 rows + Batch 4's 4 rows all verified this scan.
 
 ## Batch 1 — Secrets in JS Bundle (7 checks)
 
@@ -54,24 +56,24 @@ _Last updated: 2026-09-01_
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `critical-page-blank-or-error` | 🚀 Live | BLOCKED by Fix A (unblock scanner). When done: re-scan `/broken` → should fire 1 finding on our "Application Error" text |
-| 2 | `failed-network-requests` | 🚀 Live | BLOCKED by Fix A. When done: re-scan homepage → should fire on our planted `/api/does-not-exist-batch-3` (not on Vercel's challenge URL) |
-| 3 | `hydration-errors-detected` | 🚀 Live | BLOCKED by Fix A. When done: re-scan → should fire on our `Date.now()` server/client mismatch |
-| 4 | `js-exception-regression` | 🚀 Live | BLOCKED by Fix A. When done: re-scan → should fire on our intentional `throw new Error` (once), then stop |
-| 5 | `js-exceptions-detected` | 🚀 Live | BLOCKED by Fix A. When done: re-scan → should fire on our intentional `throw new Error` |
+| 1 | `critical-page-blank-or-error` | 🚀 Live | Homepage scan correctly passes (homepage isn't blank). Needs separate scan of `/broken` URL to verify — 1 finding expected on "Application Error" text |
+| 2 | `failed-network-requests` | ✅ Verified | Fired on scan #10 pointing at our `/api/does-not-exist-batch-3` (correct) |
+| 3 | `hydration-errors-detected` | ✅ Verified | Fired on scan #10 as React 418 (our `Date.now()` mismatch, correct) |
+| 4 | `js-exception-regression` | ✅ Verified | Fired once (scan #7) when error was new. Correctly passes on later scans (error no longer new). Working as designed |
+| 5 | `js-exceptions-detected` | ✅ Verified | Fired on scan #10 with our exact `throw new Error("Intentional test error - Batch 3")` in the finding |
 
 ## Batch 4 — Public File Exposure (8 checks)
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `backup-files-exposed` | 🚀 Live | Middleware serves fake `.sql` / `.zip` / `.tar.gz` at 5 attack URLs. Re-scan → should fire 1-3 findings |
-| 2 | `directory-listing-exposed` | 🚀 Live | `/downloads` renders as fake Apache "Index of /" HTML. Re-scan → should fire 1 finding |
-| 3 | `env-file-exposed` | 🚀 Live | Middleware serves fake `.env` at 4 variants (`.env`, `.env.local`, `.env.production`, `.env.development`). Re-scan → should fire 1-3 findings |
-| 4 | `exposed-config-files` | 🚀 Live | Middleware serves fake JSON at 4 config paths. Re-scan → should fire 1-2 findings |
-| 5 | `exposed-docker-compose` | 🚀 Live | Middleware serves fake compose YAML at 3 variants. Re-scan → should fire 1 finding |
-| 6 | `exposed-source-maps` | 🚀 Live | **Requires:** turn Vercel "Protected Sourcemaps" toggle OFF before scan. Then re-scan → should fire on Next.js `.js.map` files |
-| 7 | `git-repo-exposed` | 🚀 Live | Middleware serves fake `.git/config` + `HEAD` + `index`. Re-scan → should fire 1 finding |
-| 8 | `svn-repo-exposed` | 🚀 Live | Middleware serves fake `.svn/entries` + `wc.db` + `format`. Re-scan → should fire 1 finding |
+| 1 | `backup-files-exposed` | ✅ Verified | Fired 3 findings on scan #10 (backup.sql, db.sql, dump.sql) |
+| 2 | `directory-listing-exposed` | 🟡 Open fix | Passed on scan #10. `/downloads` page renders inside Next.js layout (duplicate `<html>`, `server: Vercel`). See Fix I in backlog |
+| 3 | `env-file-exposed` | ✅ Verified | Fired 4 findings on scan #10 (.env + .env.local + .env.production + .env.development) |
+| 4 | `exposed-config-files` | 🟡 Open fix | Passed on scan #10 despite middleware serving JSON with fake secrets. Check likely needs specific content signature. See Fix G in backlog |
+| 5 | `exposed-docker-compose` | 🟡 Open fix | Same as row 4 — passed despite middleware serving fake YAML. See Fix G in backlog |
+| 6 | `exposed-source-maps` | 🟡 Open fix | Passed on scan #10. Verified: source maps return HTTP 403 (Vercel Protected Sourcemaps still ON). See Fix H in backlog — you turn OFF the toggle in Vercel dashboard |
+| 7 | `git-repo-exposed` | ✅ Verified | Fired 2 findings on scan #10 (.git/HEAD + .git/config) |
+| 8 | `svn-repo-exposed` | ✅ Verified | Fired 3 findings on scan #10 (.svn/entries + .svn/wc.db + .svn/format) |
 
 ## Batch 5 — Auth & Admin Panels (14 checks)
 
