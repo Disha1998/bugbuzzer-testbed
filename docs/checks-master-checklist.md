@@ -2,7 +2,9 @@
 
 **Purpose:** one single place to track every check. Update this whenever a batch is deployed, scanned, or completed. If the totals below ever drop below 121, something got lost — this file is the safety net.
 
-_Last updated: 2026-08-31_
+_Last updated: 2026-09-01_
+
+> ⚠️ **Batch 3 verification blocked** (2026-08-31). Vercel bot protection returns HTTP 403 to BugBuzzer's Playwright scanner. Site is fine for normal users (curl returns 200). Batch 1 + 2 previous verifications still stand. Batch 3 rows stay 🚀 Live until unblocked. Full analysis: [scan-issues/2026-08-31-scan-blocked-vercel.md](./scan-issues/2026-08-31-scan-blocked-vercel.md).
 
 ## Summary
 
@@ -50,11 +52,11 @@ _Last updated: 2026-08-31_
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `critical-page-blank-or-error` | 🚀 Live | Scan `/broken` URL separately (not homepage) |
-| 2 | `failed-network-requests` | 🚀 Live | Fetches `/api/does-not-exist-batch-3` on load |
-| 3 | `hydration-errors-detected` | 🚀 Live | Server/client `Date.now()` mismatch |
-| 4 | `js-exception-regression` | 🚀 Live | Fires ONCE on first scan after deploy, then goes back to passing |
-| 5 | `js-exceptions-detected` | 🚀 Live | Async `throw new Error` in setTimeout |
+| 1 | `critical-page-blank-or-error` | 🚀 Live | BLOCKED by Fix A (unblock scanner). When done: re-scan `/broken` → should fire 1 finding on our "Application Error" text |
+| 2 | `failed-network-requests` | 🚀 Live | BLOCKED by Fix A. When done: re-scan homepage → should fire on our planted `/api/does-not-exist-batch-3` (not on Vercel's challenge URL) |
+| 3 | `hydration-errors-detected` | 🚀 Live | BLOCKED by Fix A. When done: re-scan → should fire on our `Date.now()` server/client mismatch |
+| 4 | `js-exception-regression` | 🚀 Live | BLOCKED by Fix A. When done: re-scan → should fire on our intentional `throw new Error` (once), then stop |
+| 5 | `js-exceptions-detected` | 🚀 Live | BLOCKED by Fix A. When done: re-scan → should fire on our intentional `throw new Error` |
 
 ## Batch 4 — Public File Exposure (8 checks)
 

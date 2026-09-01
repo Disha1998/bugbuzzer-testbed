@@ -1,14 +1,27 @@
 # Batch 3 — JavaScript Runtime Errors
 
-## 📋 Status at a glance — 2026-08-31
+## 📋 Status at a glance — 2026-09-01
 
-**Batch complete? NO ❌** (deployed, awaiting first scan)
-- **0 of 5 rows scan-verified yet** — code deployed, needs first scan to confirm
-- **0 open issues** — no scan results yet
-- **1 quirk to remember:** Row 34 fires only ONCE (on the first scan after new error appears), then goes back to passing forever. Not a bug.
-- **1 extra scan needed:** Row 38 requires a separate scan against `/broken` URL, not the homepage.
+**Batch complete? NO ❌ — BLOCKED, cannot verify**
+- **0 of 5 rows verified** — scanner cannot reach the deployed content
+- **10 total issues found** across Batch 3 + Batch 1/2 regressions + scanner bugs
+- **Root cause:** Vercel bot protection returns HTTP 403 to BugBuzzer's Playwright scanner. Real users get HTTP 200 (verified with curl). Nothing wrong with our code — the scanner just can't reach it.
 
-Last scan: BB-20260826-E71978 (2026-08-26, before Batch 3 was deployed). Next scan will be the first one to test Batch 3.
+**Open issues (all downstream of one root cause — Fix A in the backlog):**
+1. Row 34 (js-exception-regression) — fired for WRONG reason (Vercel 403, not our intentional error). **Fix A** → re-scan → should fire on our `throw new Error` once.
+2. Row 35 (js-exceptions-detected) — same wrong reason. **Fix A** → re-scan → should fire on our error.
+3. Row 36 (failed-network-requests) — fired on Vercel challenge URL, not our planted `/api/does-not-exist-batch-3`. **Fix A** → re-scan → should fire on our 404 fetch.
+4. Row 37 (hydration-errors-detected) — never fired. **Fix A** → re-scan → should fire on `Date.now()` mismatch.
+5. Row 38 (critical-page-blank-or-error) — never fired on `/broken`. **Fix A** → re-scan `/broken` → should fire on "Application Error" text.
+6. All Batch 1 checks now show "not detected" — REGRESSION caused by scanner block (fake keys still deployed, verified by curl). **Fix A** → checks return to firing correctly.
+7. All Batch 2 checks now show "not detected" — REGRESSION caused by scanner block (cookies/CDN/JWT still deployed). **Fix A** → checks return.
+8. **Cannot proceed with Batch 3 verification until Fix A is done.** See [testbed-fixes-backlog.md → Fix A](../testbed-fixes-backlog.md).
+
+**Scans that hit this:** BB-20260831-6624A2 (homepage), BB-20260831-18605E (/broken), BB-20260831-529521 (re-scan). All 3 got HTTP 403 from Vercel.
+
+**What we did NOT change:** Vercel settings unchanged since Batch 2 (Disha confirmed). Vercel likely rolled out default bot protection between Aug 26 (scan #5 worked) and Aug 31 (scans #7-9 blocked).
+
+Full analysis: [scan-issues/2026-08-31-scan-blocked-vercel.md](../scan-issues/2026-08-31-scan-blocked-vercel.md).
 
 ---
 
