@@ -2,7 +2,7 @@
 
 **Purpose:** one single place to track every check. Update this whenever a batch is deployed, scanned, or completed. If the totals below ever drop below 121, something got lost — this file is the safety net.
 
-_Last updated: 2026-09-02 (after Batch 5 first scan)_
+_Last updated: 2026-09-02 (after Batch 6 deployment)_
 
 > 🎉 **Testbed moved to Hostinger VPS** (2026-09-02) — deployment now at `76.13.179.65` as Docker container behind nginx. No more Vercel bot protection interference. Scan #14 (homepage) found 36 real vulnerabilities, up from ~10 on Vercel. See [hostinger-deployment.md](./hostinger-deployment.md).
 >
@@ -17,12 +17,13 @@ _Last updated: 2026-09-02 (after Batch 5 first scan)_
 | Status | Count | Meaning |
 |---|---|---|
 | ✅ Verified | 52 | Check fires correctly on our testbed (scan confirmed) |
-| 🟡 Open fix | 14 | Check should fire but doesn't yet — needs testbed code tweak (Batch 2 rows 1+3, Batch 3 row 38, Batch 4 rows 2/4/6, Batch 5 rows 3/5/7/8/9/11/13/15) |
-| ⬜ Pending | 32 | Batches 6 + 6b not started yet, will be built in Phase A |
+| 🚀 Live | 10 | Batch 6 deployed, awaiting first scan |
+| 🟡 Open fix | 14 | Check should fire but doesn't yet — needs testbed code tweak (see backlog Fixes B, C, F blocker 2, G row 3, I, K blocker 2, L) |
+| ⬜ Pending | 22 | Batch 6b (Extended Secrets) not started yet |
 | ⏸️ Phase B | 23 | Deferred to Phase B (needs VPS / throwaway domain / cloud accounts) — includes `exposed-datastore` |
 | **Total** | **121** | Should equal 121 |
 
-**Countdown:** 52 of 121 verified (43%) — up from 47. Batch 5 first scan added 5 verified (admin panels, dangerous methods, rate limiting, open redirect, unauth API). 8 Batch 5 rows need content-shape refinement (see [testbed-fixes-backlog.md](./testbed-fixes-backlog.md) Fix L).
+**Countdown:** 52 of 121 verified (43%) + 10 Batch 6 Live pending scan. After Batch 6 scan lands (projected 8-10 more verified): ~60-62/121 (50%).
 
 ## Batch 1 — Secrets in JS Bundle (7 checks)
 
@@ -95,20 +96,20 @@ _Last updated: 2026-09-02 (after Batch 5 first scan)_
 | 13 | `unauthenticated-ai-proxy-endpoint` | 🟡 Open fix | Passed on scan #15. Our /api/ai/chat was discovered (fired unauthenticated-api-endpoint) but not flagged as AI-proxy specifically. Check needs proof of real LLM behavior (response echoing prompt, streaming). See Fix L |
 | 14 | `unauthenticated-api-endpoint` | ✅ Verified | Fired 3 findings on scan #15 (/api/users, /api/graphql, /api/ai/chat all return structured JSON without auth) |
 
-## Batch 6 — Injection Probes (10 checks)
+## Batch 6 — Injection Probes (10 checks — all deployed)
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `ai-endpoint-model-parameter-override` | ⬜ Pending |  |
-| 2 | `error-based-sql-injection` | ⬜ Pending |  |
-| 3 | `llm-direct-prompt-injection-vulnerable` | ⬜ Pending |  |
-| 4 | `nodejs-eval-code-injection` | ⬜ Pending |  |
-| 5 | `os-command-injection` | ⬜ Pending |  |
-| 6 | `python-eval-code-injection` | ⬜ Pending |  |
-| 7 | `reflected-xss-in-url-parameters` | ⬜ Pending |  |
-| 8 | `server-side-template-injection` | ⬜ Pending |  |
-| 9 | `time-based-blind-sql-injection` | ⬜ Pending |  |
-| 10 | `vite-dev-server-file-read` | ⬜ Pending |  |
+| 1 | `ai-endpoint-model-parameter-override` | 🚀 Live | /api/ai/chat echoes requested `model` param in response |
+| 2 | `error-based-sql-injection` | 🚀 Live | /api/user?id= returns fake MySQL error on quote / UNION / OR 1=1 |
+| 3 | `llm-direct-prompt-injection-vulnerable` | 🚀 Live | /api/ai/chat leaks fake system prompt on "ignore previous" phrases |
+| 4 | `nodejs-eval-code-injection` | 🚀 Live | /api/eval?expr= computes simple math (7*7 → 49) |
+| 5 | `os-command-injection` | 🚀 Live | /api/shell?cmd= returns fake `id`, `whoami`, `cat /etc/passwd` output |
+| 6 | `python-eval-code-injection` | 🚀 Live | /api/py?code= returns fake Python output for `__import__('os')...` payloads |
+| 7 | `reflected-xss-in-url-parameters` | 🚀 Live | /search?q= renders input via dangerouslySetInnerHTML (unescaped) |
+| 8 | `server-side-template-injection` | 🚀 Live | /render?tpl= evaluates {{7*7}}, ${7*7}, <%= 7*7 %> syntax |
+| 9 | `time-based-blind-sql-injection` | 🚀 Live | /api/user?id= sleeps N seconds on SLEEP(N)/WAITFOR/pg_sleep |
+| 10 | `vite-dev-server-file-read` | 🚀 Live | Middleware serves fake Vite /@vite/client + /@fs/* file read |
 
 ## Batch 6b — Extended Secrets (22 checks)
 

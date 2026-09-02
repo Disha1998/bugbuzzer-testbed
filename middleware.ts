@@ -249,6 +249,28 @@ const FAKE_LONG_LIVED_JWT =
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Batch 6 - vite-dev-server-file-read. Fake Vite dev-server fingerprint
+  // + /@fs/* arbitrary file read (mirrors real CVE-2023-34092 shape).
+  if (pathname === "/@vite/client") {
+    return new NextResponse(
+      "// vite hmr client\nconst hot = { on: () => {}, send: () => {} };\nexport { hot };\n",
+      { status: 200, headers: { "Content-Type": "application/javascript" } },
+    );
+  }
+  if (pathname.startsWith("/@fs/")) {
+    const filePath = pathname.slice(4);
+    if (filePath === "/etc/passwd") {
+      return new NextResponse(
+        "root:x:0:0:root:/root:/bin/bash\nuser:x:1000:1000::/home/user:/bin/bash\n",
+        { status: 200, headers: { "Content-Type": "text/plain" } },
+      );
+    }
+    return new NextResponse(`# fake file content of ${filePath}\n(testbed placeholder)\n`, {
+      status: 200,
+      headers: { "Content-Type": "text/plain" },
+    });
+  }
+
   // Batch 5 - dangerous HTTP methods. Respond to OPTIONS with an Allow header
   // that includes TRACE + PUT + DELETE + PATCH so the check fires.
   if (request.method === "OPTIONS") {

@@ -8,6 +8,7 @@ import {
 } from "@/lib/fake-secrets";
 import { Batch3RuntimeVulns } from "@/components/batch-3-runtime-vulns";
 import { Batch5AuthVulns } from "@/components/batch-5-auth-vulns";
+import { Batch6InjectionVulns } from "@/components/batch-6-injection-vulns";
 
 // ⚠️ INTENTIONAL — the fake keys below are rendered directly into JSX so they
 // end up in BOTH the server-rendered HTML AND the client JS bundle. This is
@@ -146,7 +147,24 @@ const BATCHES = [
       { num: 13, name: "Unauthenticated API endpoint (/api/users)" },
     ],
   },
-  { id: "6", title: "Injection Probes (SSTI, XSS, SQLi, eval)", status: "Pending", checks: [] },
+  {
+    id: "6",
+    title: "Injection Probes (SSTI, XSS, SQLi, eval)",
+    status: "Live",
+    statusHint: "10 checks deployed, awaiting first scan",
+    checks: [
+      { num: 1, name: "Reflected XSS in URL parameters (/search?q=)" },
+      { num: 2, name: "Server-side template injection (/render?tpl=)" },
+      { num: 3, name: "Error-based SQL injection (/api/user?id=)" },
+      { num: 4, name: "Time-based blind SQL injection (/api/user?id=)" },
+      { num: 5, name: "Node.js eval code injection (/api/eval?expr=)" },
+      { num: 6, name: "Python eval code injection (/api/py?code=)" },
+      { num: 7, name: "OS command injection (/api/shell?cmd=)" },
+      { num: 8, name: "LLM direct prompt injection (/api/ai/chat)" },
+      { num: 9, name: "AI endpoint model parameter override (/api/ai/chat)" },
+      { num: 10, name: "Vite dev-server file read (/@fs/*)" },
+    ],
+  },
   { id: "6b", title: "Extended Secrets (V6 bundle + AI + webhooks)", status: "Pending", checks: [] },
 ] as const;
 
@@ -313,6 +331,11 @@ export default function Home() {
           so the scanner discovers admin panels, unauth APIs, open redirect,
           OAuth without state, GraphQL introspection, etc.). */}
       <Batch5AuthVulns />
+
+      {/* Batch 6 — injection probes (links so scanner discovers ?q=, ?id=,
+          ?expr=, ?tpl=, ?cmd=, ?code= parameters and probes each with real
+          attack payloads). All server-side "execution" is fake pattern-match. */}
+      <Batch6InjectionVulns />
     </main>
   );
 }
