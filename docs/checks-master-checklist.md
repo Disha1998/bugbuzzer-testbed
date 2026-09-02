@@ -2,7 +2,7 @@
 
 **Purpose:** one single place to track every check. Update this whenever a batch is deployed, scanned, or completed. If the totals below ever drop below 121, something got lost — this file is the safety net.
 
-_Last updated: 2026-09-02 (after Hostinger migration + scans #13/#14)_
+_Last updated: 2026-09-02 (after Batch 5 first scan)_
 
 > 🎉 **Testbed moved to Hostinger VPS** (2026-09-02) — deployment now at `76.13.179.65` as Docker container behind nginx. No more Vercel bot protection interference. Scan #14 (homepage) found 36 real vulnerabilities, up from ~10 on Vercel. See [hostinger-deployment.md](./hostinger-deployment.md).
 >
@@ -16,14 +16,13 @@ _Last updated: 2026-09-02 (after Hostinger migration + scans #13/#14)_
 
 | Status | Count | Meaning |
 |---|---|---|
-| ✅ Verified | 47 | Check fires correctly on our testbed (scan confirmed) |
-| 🚀 Live | 13 | Batch 5 deployed, awaiting first scan |
-| 🟡 Open fix | 6 | Check should fire but doesn't yet — needs testbed code fix (rows 1/3 Batch 2, row 38 Batch 3, rows 2/4/6 Batch 4) |
+| ✅ Verified | 52 | Check fires correctly on our testbed (scan confirmed) |
+| 🟡 Open fix | 14 | Check should fire but doesn't yet — needs testbed code tweak (Batch 2 rows 1+3, Batch 3 row 38, Batch 4 rows 2/4/6, Batch 5 rows 3/5/7/8/9/11/13/15) |
 | ⬜ Pending | 32 | Batches 6 + 6b not started yet, will be built in Phase A |
-| ⏸️ Phase B | 23 | Deferred to Phase B (needs VPS / throwaway domain / cloud accounts) — includes new deferral of `exposed-datastore` |
+| ⏸️ Phase B | 23 | Deferred to Phase B (needs VPS / throwaway domain / cloud accounts) — includes `exposed-datastore` |
 | **Total** | **121** | Should equal 121 |
 
-**Countdown:** 47 of 121 verified (39%) + 13 Live pending first scan. After Batch 5 scan lands: projected 60/121 (50%).
+**Countdown:** 52 of 121 verified (43%) — up from 47. Batch 5 first scan added 5 verified (admin panels, dangerous methods, rate limiting, open redirect, unauth API). 8 Batch 5 rows need content-shape refinement (see [testbed-fixes-backlog.md](./testbed-fixes-backlog.md) Fix L).
 
 ## Batch 1 — Secrets in JS Bundle (7 checks)
 
@@ -81,20 +80,20 @@ _Last updated: 2026-09-02 (after Hostinger migration + scans #13/#14)_
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `admin-or-debug-panel-exposed` | 🚀 Live | Middleware serves fake /admin, /administrator, /wp-admin, /phpmyadmin |
-| 2 | `dangerous-http-methods` | 🚀 Live | Middleware responds to OPTIONS with TRACE/PUT/DELETE/PATCH in Allow header |
-| 3 | `debug-mode-enabled` | 🚀 Live | Middleware serves fake Django debug page at /__debug__ and /debug |
-| 4 | `default-credentials-on-services` | 🚀 Live | /api/login accepts admin/admin, admin/password, root/root, administrator/administrator |
-| 5 | `exposed-ai-infra` | 🚀 Live | Middleware serves fake Langfuse (/langfuse) + MLflow (/mlflow) |
+| 1 | `admin-or-debug-panel-exposed` | ✅ Verified | Fired 3 findings on scan #15 (/admin, /wp-admin, /debug). Also picked up our /debug as an admin panel (bonus overlap) |
+| 2 | `dangerous-http-methods` | ✅ Verified | Fired 3 findings on scan #15 (TRACE + PUT + DELETE all flagged separately from our OPTIONS response) |
+| 3 | `debug-mode-enabled` | 🟡 Open fix | Passed on scan #15. Our /debug + /__debug__ got claimed by admin-panel check instead. Needs specific framework markers (Werkzeug console URL, `__debugger__` JSON endpoint). See Fix L in backlog |
+| 4 | `default-credentials-on-services` | 🟡 Open fix | Skipped on scan #15 — fingerprinted 7 panels but 2 inconclusive. Our /admin form action is `/api/login` (relative URL from panel), scanner may probe login differently. See Fix L |
+| 5 | `exposed-ai-infra` | 🟡 Open fix | Passed on scan #15. Our /langfuse + /mlflow HTML doesn't match check heuristic — needs real Langfuse dashboard URL structure (e.g. specific asset paths, meta tags). See Fix L |
 | 6 | `exposed-datastore` | ⏸️ Phase B | Needs exposed database dashboards on subdomains (elasticsearch/mongodb/adminer via crt.sh enumeration) |
-| 7 | `exposed-dev-tools` | 🚀 Live | Middleware serves fake Storybook at /storybook |
-| 8 | `graphql-introspection-enabled` | 🚀 Live | /api/graphql + /graphql return full schema on introspection query |
-| 9 | `host-header-reflection` | 🚀 Live | /redirect-home reflects Host header into 302 redirect Location |
-| 10 | `missing-rate-limiting-on-login` | 🚀 Live | /api/login has no rate limit |
-| 11 | `oauth-state-parameter-missing` | 🚀 Live | GitHub OAuth authorize link on homepage with no `state` param |
-| 12 | `open-redirect-vulnerability` | 🚀 Live | /redirect?url=<any> redirects to arbitrary URL |
-| 13 | `unauthenticated-ai-proxy-endpoint` | 🚀 Live | /api/ai/chat returns OpenAI-shaped response for any prompt, no auth |
-| 14 | `unauthenticated-api-endpoint` | 🚀 Live | /api/users returns fake user records, no auth |
+| 7 | `exposed-dev-tools` | 🟡 Open fix | Passed on scan #15. Storybook check needs specific asset markers (`iframe.html`, `runtime~main.iframe.bundle.js`, `sb-preview`). See Fix L |
+| 8 | `graphql-introspection-enabled` | 🟡 Open fix | Passed on scan #15 — "No GraphQL endpoint detected on target at any probed path". Our GET returns schema; check may want POST with specific error shape on GET. See Fix L |
+| 9 | `host-header-reflection` | 🟡 Open fix | Skipped on scan #15 — check never probed /redirect-home. Needs a user-facing redirect pattern (e.g. `?returnTo=` on a route the scanner discovers). See Fix L |
+| 10 | `missing-rate-limiting-on-login` | ✅ Verified | Fired on scan #15 — scanner sent 30 POSTs to /api/login, no rate limit, no 429, no CAPTCHA |
+| 11 | `oauth-state-parameter-missing` | 🟡 Open fix | Passed on scan #15 — "No OAuth authorization URLs discovered on the page". Our link is in a client component that renders via useEffect fetch; needs SSR-rendered `<a href="https://github.com/login/oauth/authorize?...">`. See Fix L |
+| 12 | `open-redirect-vulnerability` | ✅ Verified | Fired 1 finding on scan #15 — /redirect?url=https://evil.example.com → HTTP 302 with Location: evil.example.com |
+| 13 | `unauthenticated-ai-proxy-endpoint` | 🟡 Open fix | Passed on scan #15. Our /api/ai/chat was discovered (fired unauthenticated-api-endpoint) but not flagged as AI-proxy specifically. Check needs proof of real LLM behavior (response echoing prompt, streaming). See Fix L |
+| 14 | `unauthenticated-api-endpoint` | ✅ Verified | Fired 3 findings on scan #15 (/api/users, /api/graphql, /api/ai/chat all return structured JSON without auth) |
 
 ## Batch 6 — Injection Probes (10 checks)
 

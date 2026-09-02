@@ -4,9 +4,11 @@
 
 Follows Disha's "collect first, fix later" strategy — deploy vulnerabilities across all Phase A batches (2, 3, 4, 5, 6, 6b), collect open issues in each batch's MD, consolidate here, then work through this list in one focused fix session.
 
-_Last updated: 2026-09-02 (after Hostinger migration + scan #14)_
+_Last updated: 2026-09-02 (after Batch 5 first scan)_
 
-> 🎉 **Hostinger migration resolved 4 fixes** — Fix A (Vercel bot), Fix D (BugBuzzer bug from Vercel infra), Fix G (docker-compose signature), Fix K (Vercel bot on /broken). Testbed now runs on `76.13.179.65` as a Docker container behind nginx — no more bot protection interference. See [hostinger-deployment.md](./hostinger-deployment.md).
+> 🎉 **Hostinger migration resolved 4 fixes** — Fix A (Vercel bot), Fix D (BugBuzzer bug from Vercel infra), Fix G row 4 (docker-compose signature), Fix K blocker 1 (Vercel bot on /broken). Testbed now runs on `76.13.179.65` as a Docker container behind nginx. See [hostinger-deployment.md](./hostinger-deployment.md).
+>
+> 🚀 **Batch 5 deployed** — 5 of 13 rows verified on scan #15. 8 rows need content-shape refinement — all bundled as **Fix L** below. 1 row deferred to Phase B.
 
 ---
 
@@ -217,6 +219,57 @@ Also possible: BugBuzzer's check doesn't probe `/downloads` at all — it probab
 
 ---
 
+### Fix L — Batch 5 open items (8 rows need content-shape refinement)
+
+- **From:** Batch 5 scan #15 (2026-09-02)
+- **Owner:** Us
+- **Priority:** 🟡 P2 (do in one focused session)
+- **State:** ⬜ Open
+
+**What's wrong:** all 8 rows below have vulnerable content deployed, but BugBuzzer's checks have specific content-shape heuristics they need to match. Our current fake content is too generic.
+
+**Sub-items (each is a small tweak):**
+
+**L.1 — `debug-mode-enabled`** — needs specific framework debug markers
+- Currently: our /debug + /__debug__ serve generic "DjangoDebugToolbar" HTML → picked up by admin-panel check instead
+- Fix: add Werkzeug console URL structure (`/console`, `<div class="debugger">`, `Traceback (most recent call last)` in `<pre class="traceback">`) OR Django `DEBUG=True` markers (`<div id="djangoBanner">`, request/response variable dumps)
+- Read BugBuzzer check source: `packages/check-catalog/src/checks/*/debug-mode-enabled.ts`
+
+**L.2 — `default-credentials-on-services`** — panels fingerprint but creds test inconclusive
+- Currently: scanner fingerprinted 7 panels but 2 couldn't be tested (WAF/timeout)
+- Fix: check what login endpoint the scanner actually POSTs to (may be `/admin/login` not `/api/login`), OR match the exact request shape (form-encoded with specific field names)
+- Alternative: make our /admin form action absolute-URL `/api/login` visible AND make /api/login accept the exact credentials the check probes (check may try `admin:admin`, `admin:password123`, etc.)
+
+**L.3 — `exposed-ai-infra`** — fake dashboards don't match check heuristic
+- Currently: /langfuse + /mlflow serve generic HTML with "Langfuse" / "MLflow" text
+- Fix: match real Langfuse/W&B/MLflow HTML structure — specific meta tags (`<meta name="application-name" content="Langfuse">`), asset paths (`/_next/static/chunks/langfuse-*`), or window global variables (`window.__LANGFUSE__ = {...}`)
+
+**L.4 — `exposed-dev-tools`** — Storybook needs real markers
+- Currently: /storybook serves fake HTML with "Storybook" title
+- Fix: serve real Storybook markers — `<iframe src="iframe.html">`, `runtime~main.iframe.bundle.js`, `sb-preview-loader.js`, `<div id="root">` + `<div id="docs-root">`
+
+**L.5 — `graphql-introspection-enabled`** — endpoint discovery failed
+- Currently: /api/graphql + /graphql exist. Scanner says "No GraphQL endpoint detected on target at any probed path"
+- Fix options: (a) GET /api/graphql returns 405 Method Not Allowed with GraphQL-specific error body (`{"errors":[{"message":"GET method not supported"}]}`), (b) POST to /api/graphql with body containing "query" returns `data` field, (c) advertise via HTTP header (`X-GraphQL-Path: /api/graphql`)
+
+**L.6 — `host-header-reflection`** — /redirect-home not on scanner probe list
+- Currently: /redirect-home reflects Host header but scanner doesn't probe it
+- Fix: rename to a discoverable pattern — `?returnTo=<url>`, `?redirect_uri=<url>`, or hook the reflection into an existing endpoint the scanner already discovered (e.g. /api/login redirect after success)
+
+**L.7 — `oauth-state-parameter-missing`** — OAuth link not discovered
+- Currently: GitHub OAuth link is in Batch5AuthVulns component (client component with useEffect fetches). Scanner may not see the `<a href=>` rendered in initial HTML.
+- Fix: verify our OAuth link is in the server-rendered HTML (view-source should show `github.com/login/oauth/authorize?client_id=...`). If missing, move the OAuth link out of the client component into a server component or app/page.tsx directly
+
+**L.8 — `unauthenticated-ai-proxy-endpoint` + `ai-endpoint-model-parameter-override`** — endpoint discovered but not AI-flagged
+- Currently: /api/ai/chat picked up by unauthenticated-api-endpoint (generic) but not flagged as AI proxy specifically
+- Fix: make our response look like a REAL AI proxy — return OpenAI streaming format, echo the input `model` param in response (`"model":"gpt-4"`), match expected `choices[0].message.content` shape more precisely. Also honor `model` param overrides to trigger `ai-endpoint-model-parameter-override`
+
+**Verification:** rescan → each of the 8 rows fires with at least 1 finding.
+
+**Estimated effort:** ~45-60 min for all 8 sub-items in one session.
+
+---
+
 ### Fix J — Report BugBuzzer bug: http-baseline collector transient errors
 
 - **From:** Batch 4 scan #10 (2026-09-01)
@@ -278,9 +331,9 @@ Likely a transient BugBuzzer scanner-side issue with the http-baseline collector
 - Change State to ✅ Done
 - Move to a "Completed" section (or delete after the batch is fully verified)
 
-**Priority summary right now (2026-09-02, after Hostinger migration):**
-- ✅ Resolved: Fix A (Vercel bot — moved to Hostinger), Fix D (moot for us), Fix G-row4 (docker-compose), Fix K-blocker1 (Vercel bot on /broken)
-- 🟡 P2 still open: Fix B (mixed content), Fix C (CORS), Fix F-blocker2 (Turbopack source maps), Fix G-row3 (config-files), Fix I (directory listing), Fix K-blocker2 (broken page layout wrap)
+**Priority summary right now (2026-09-02, after Batch 5 first scan):**
+- ✅ Resolved: Fix A (Vercel bot — moved to Hostinger), Fix D (moot), Fix G-row4 (docker-compose), Fix K-blocker1 (Vercel bot on /broken)
+- 🟡 P2 still open: Fix B (mixed content), Fix C (CORS), Fix F-blocker2 (Turbopack source maps), Fix G-row3 (config-files), Fix I (directory listing), Fix K-blocker2 (broken page layout wrap), **Fix L (Batch 5 — 8 sub-items)**
 - ⏸️ BugBuzzer team bugs to report: Fix E (silent regression when blocked), Fix J (http-baseline transient errors) — no longer affecting us but worth reporting
 
 ---

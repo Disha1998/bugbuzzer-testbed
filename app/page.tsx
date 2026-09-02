@@ -128,8 +128,8 @@ const BATCHES = [
   {
     id: "5",
     title: "Auth & Admin Panels",
-    status: "Live",
-    statusHint: "13 checks deployed, awaiting first scan · exposed-datastore deferred to Phase B (needs subdomain infra)",
+    status: "Partial",
+    statusHint: "5 of 13 verified on scan #15 · 8 open fixes (Fix L in backlog) · exposed-datastore deferred to Phase B",
     checks: [
       { num: 1, name: "Admin / debug panels exposed (/admin, /phpmyadmin, /wp-admin)" },
       { num: 2, name: "Dangerous HTTP methods (TRACE / PUT / DELETE in Allow header)" },

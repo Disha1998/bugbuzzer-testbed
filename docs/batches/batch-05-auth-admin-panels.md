@@ -1,29 +1,34 @@
 # Batch 5 — Auth & Admin Panels
 
-## Status at a glance — 2026-09-02 (deployed, awaiting first scan)
+## Status at a glance — 2026-09-02 (after first scan #15)
 
-**Batch complete? NO — 13 rows deployed, first scan pending**
-- All 13 planted vulns live on Hostinger deployment
-- 1 row deferred to Phase B: `exposed-datastore` (needs subdomain infra like `admin.testbed.blockchainhq.xyz`)
-- Ready to scan `https://testbed.blockchainhq.xyz`
+**Batch complete? PARTIAL — 5 of 13 verified, 8 open fixes, 1 deferred**
 
-**Rows deployed:**
-1. `admin-or-debug-panel-exposed` — fake admin panels at `/admin`, `/administrator`, `/wp-admin`, `/phpmyadmin`
-2. `dangerous-http-methods` — middleware responds to OPTIONS with `Allow: GET, HEAD, POST, PUT, DELETE, PATCH, TRACE, OPTIONS`
-3. `debug-mode-enabled` — fake Django/Werkzeug debug page at `/__debug__` and `/debug`
-4. `default-credentials-on-services` — `/api/login` accepts `admin/admin`, `admin/password`, `root/root`, `administrator/administrator`
-5. `exposed-ai-infra` — fake Langfuse at `/langfuse`, fake MLflow at `/mlflow`
-6. `exposed-dev-tools` — fake Storybook at `/storybook`
-7. `graphql-introspection-enabled` — `/api/graphql` + `/graphql` return full schema on introspection query
-8. `host-header-reflection` — `/redirect-home` reflects Host header into 302 redirect Location
-9. `missing-rate-limiting-on-login` — `/api/login` has no rate limit
-10. `oauth-state-parameter-missing` — homepage has GitHub OAuth authorize link with no `state` param
-11. `open-redirect-vulnerability` — `/redirect?url=<any>` redirects to arbitrary URL
-12. `unauthenticated-ai-proxy-endpoint` — `/api/ai/chat` returns OpenAI-shaped response for any prompt, no auth
-13. `unauthenticated-api-endpoint` — `/api/users` returns list of fake user records, no auth
+**✅ Verified (5 rows firing):**
+1. `admin-or-debug-panel-exposed` — 3 findings (/admin, /wp-admin, /debug)
+2. `dangerous-http-methods` — 3 findings (TRACE, PUT, DELETE each flagged separately)
+3. `missing-rate-limiting-on-login` — scanner sent 30 POSTs to /api/login, no 429
+4. `open-redirect-vulnerability` — /redirect?url=evil → HTTP 302 to evil
+5. `unauthenticated-api-endpoint` — 3 findings (/api/users, /api/graphql, /api/ai/chat)
 
-**Deferred to Phase B:**
-- `exposed-datastore` — requires exposed database dashboards (elasticsearch, mongodb, adminer) on subdomains. Scanner enumerates via crt.sh. Needs real subdomain setup.
+**🟡 Open fixes (8 rows) — all in [testbed-fixes-backlog.md](../testbed-fixes-backlog.md) under Fix L:**
+- `debug-mode-enabled` — need specific Werkzeug/Django framework markers
+- `default-credentials-on-services` — panels fingerprinted but scanner couldn't conclusively test creds (skipped as inconclusive)
+- `exposed-ai-infra` — fake Langfuse/MLflow HTML doesn't match real dashboard structure
+- `exposed-dev-tools` — Storybook needs real asset markers (iframe.html, sb-preview)
+- `graphql-introspection-enabled` — check probed our /graphql paths but didn't detect a valid endpoint
+- `host-header-reflection` — /redirect-home wasn't in scanner's probe list
+- `oauth-state-parameter-missing` — GitHub OAuth link is client-rendered, scanner needs SSR-rendered link
+- `unauthenticated-ai-proxy-endpoint` — /api/ai/chat picked up as generic API, not specifically flagged as AI proxy
+
+**⏸️ Deferred to Phase B (1 row):**
+- `exposed-datastore` — needs exposed database dashboards on subdomains (elasticsearch/mongodb/adminer). Requires subdomain infra.
+
+**Bonus find:**
+- `ai-endpoint-model-parameter-override` (Phase A extra) — check discovered /api/ai/chat but our fake doesn't honor `model` param override. Same fix path as `unauthenticated-ai-proxy-endpoint`.
+
+**Bonus regression signal:**
+- `js-exception-regression` fired 3 more findings from Batch5AuthVulns component's on-load fetches → Batch 3 gets extra coverage!
 
 ---
 
