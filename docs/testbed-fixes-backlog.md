@@ -118,24 +118,29 @@ _Last updated: 2026-09-01_
 
 ---
 
-### Fix F — Batch 4 Row 5 (exposed-source-maps) — Vercel Protected Sourcemaps still ON
+### Fix F — Batch 4 Row 5 (exposed-source-maps) — TWO blockers, one solved one open
 
-- **From:** Batch 4 scan #10 (2026-09-01)
-- **Owner:** Us (Disha — Vercel dashboard toggle)
+- **From:** Batch 4 scan #10 (2026-09-01), refined after scan #11 (2026-09-01)
+- **Owner:** Us
 - **Priority:** 🟡 P2
-- **State:** ⬜ Open
+- **State:** 🟡 Partially resolved (blocker 1 done, blocker 2 open)
 
-**What's wrong:** BugBuzzer probed source map URLs. Verified with curl: `_next/static/immutable/chunks/*.js.map` returns HTTP 403. Vercel's "Protected Sourcemaps" feature is ON — source maps only accessible to team members.
+**Blocker 1 — Vercel Protected Sourcemaps toggle — ✅ RESOLVED 2026-09-01**
+- Was: `.js.map` returned HTTP 403 (Protected Sourcemaps ON)
+- Fix applied: Disha toggled OFF in Vercel dashboard
+- Verified via curl: no more 403
 
-**Fix steps:**
-1. Vercel dashboard → bugbuzzer-testbed → Settings → Deployment Protection
-2. Scroll to **"Protected Sourcemaps"** section
-3. Toggle **OFF** → Save
-4. Wait ~30 sec for change to propagate
-5. Verify with curl: `curl -sI https://testbed.blockchainhq.xyz/_next/static/immutable/chunks/<any>.js.map` should return HTTP 200
-6. Re-scan → `exposed-source-maps` should fire
+**Blocker 2 — Turbopack doesn't emit source maps in production — ⬜ OPEN**
+- Verified via curl: `.js.map` now returns HTTP 404 (not 403 anymore, but the file doesn't exist)
+- Root cause: our Next.js app uses Turbopack (the new bundler), which does not generate `.js.map` files in production by default
+- BugBuzzer's check discovers script URLs on the page, then probes each script's `.map` counterpart. Since no .map exists, check passes.
 
-**Verification:** re-scan → `exposed-source-maps` fires with 1+ findings on Next.js source map files.
+**Fix steps for blocker 2 (cheapest first):**
+1. Edit `next.config.ts` in bugbuzzer-testbed — add `productionBrowserSourceMaps: true` to the config object
+2. Push → Vercel deploys → verify with curl that `.js.map` files now return HTTP 200
+3. Re-scan → `exposed-source-maps` should fire on the newly-exposed real Next.js source maps
+
+**Verification:** curl a `.js.map` file returns HTTP 200 with JavaScript source map JSON content; next scan flags `exposed-source-maps` with 1+ findings.
 
 ---
 
@@ -183,6 +188,27 @@ Also possible: BugBuzzer's check doesn't probe `/downloads` at all — it probab
 4. Verify with curl: response HTML is standalone (no `<!DOCTYPE html><html>` from Next.js), body starts with `<title>Index of` or `<h1>Index of`
 
 **Verification:** re-scan → `directory-listing-exposed` fires with 1 finding.
+
+---
+
+### Fix K — Batch 3 Row 38 (critical-page-blank-or-error) — /broken URL keeps hitting Vercel bot challenge
+
+- **From:** Batch 3 scan #11 (2026-09-01 — /broken URL scan)
+- **Owner:** Us
+- **Priority:** 🟡 P2
+- **State:** ⬜ Open
+
+**What's wrong:** Every scan of `https://testbed.blockchainhq.xyz/broken` gets HTTP 403 from Vercel's bot challenge (verified across scans 6, 7, 8, and 11). Curl (normal client) gets HTTP 200 with our "Application Error" content. The check `critical-page-blank-or-error` reads the URL's content, but scanner sees Vercel's 403 challenge page instead of our error text.
+
+Interestingly the HOMEPAGE didn't get bot-blocked in scan #10 or in current curls. Vercel's bot detection seems to trigger on the specific `/broken` URL — possibly because it's a rarely-visited path that pattern-matches "attacker enumeration".
+
+**Fix steps (cheapest first):**
+1. **Rename `/broken` to a less suspicious URL** — like `/status`, `/error-page`, or `/500`. Try `/error-page` first (mimics real error page URLs less scanner-suspicious than `/broken`). Update `app/broken/page.tsx` → `app/error-page/page.tsx`.
+2. **Alternative:** move the error content to the HOMEPAGE conditionally with a query param like `?error=1`. Homepage already scans successfully. But this pollutes the homepage.
+3. **Alternative:** put the error content behind a middleware route (e.g. `/api/render-error-page`) that returns error-styled HTML — middleware isn't rate-challenged as often.
+4. **Long-term:** Fix A (unblock Vercel bot protection globally) also resolves this.
+
+**Verification:** re-scan the new URL → `critical-page-blank-or-error` fires with 1 finding on our "Application Error" text.
 
 ---
 

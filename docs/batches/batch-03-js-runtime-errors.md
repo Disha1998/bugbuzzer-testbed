@@ -14,7 +14,7 @@
 4. Row 34 `js-exception-regression` — ✅ correctly reports "no new errors since prior scan" (fired once earlier when error was new, now shows as passing — that's the intended lifecycle)
 
 **Still to verify:**
-- Row 38 `critical-page-blank-or-error` — needs separate scan of `https://testbed.blockchainhq.xyz/broken`. Old lesson stands: this check reads the SINGLE page it scans, not a whole site.
+- Row 38 `critical-page-blank-or-error` — **BLOCKED after scan #11 attempt.** Scanned `/broken`, Vercel returned HTTP 403 (bot challenge). Curl gets HTTP 200 with our error content, but scanner sees Vercel's 403 page. **Fix K in [testbed-fixes-backlog.md](../testbed-fixes-backlog.md)** proposes renaming `/broken` to a less scanner-suspicious URL (e.g. `/error-page`).
 
 **Open issues (all downstream of one root cause — Fix A in the backlog):**
 1. Row 34 (js-exception-regression) — fired for WRONG reason (Vercel 403, not our intentional error). **Fix A** → re-scan → should fire on our `throw new Error` once.

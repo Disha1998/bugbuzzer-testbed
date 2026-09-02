@@ -56,7 +56,7 @@ _Last updated: 2026-09-01 (after scan #10)_
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `critical-page-blank-or-error` | 🚀 Live | Homepage scan correctly passes (homepage isn't blank). Needs separate scan of `/broken` URL to verify — 1 finding expected on "Application Error" text |
+| 1 | `critical-page-blank-or-error` | 🟡 Open fix | Scanned `/broken` in scan #11 but Vercel returned HTTP 403 (bot challenge) → scanner saw challenge page not our error content. See Fix K in backlog — rename `/broken` to less suspicious URL |
 | 2 | `failed-network-requests` | ✅ Verified | Fired on scan #10 pointing at our `/api/does-not-exist-batch-3` (correct) |
 | 3 | `hydration-errors-detected` | ✅ Verified | Fired on scan #10 as React 418 (our `Date.now()` mismatch, correct) |
 | 4 | `js-exception-regression` | ✅ Verified | Fired once (scan #7) when error was new. Correctly passes on later scans (error no longer new). Working as designed |
@@ -71,7 +71,7 @@ _Last updated: 2026-09-01 (after scan #10)_
 | 3 | `env-file-exposed` | ✅ Verified | Fired 4 findings on scan #10 (.env + .env.local + .env.production + .env.development) |
 | 4 | `exposed-config-files` | 🟡 Open fix | Passed on scan #10 despite middleware serving JSON with fake secrets. Check likely needs specific content signature. See Fix G in backlog |
 | 5 | `exposed-docker-compose` | 🟡 Open fix | Same as row 4 — passed despite middleware serving fake YAML. See Fix G in backlog |
-| 6 | `exposed-source-maps` | 🟡 Open fix | Passed on scan #10. Verified: source maps return HTTP 403 (Vercel Protected Sourcemaps still ON). See Fix H in backlog — you turn OFF the toggle in Vercel dashboard |
+| 6 | `exposed-source-maps` | 🟡 Open fix | Vercel Protected Sourcemaps toggle now OFF ✅ (blocker 1 done). BUT `.js.map` files return HTTP 404 — Turbopack doesn't emit source maps in production. Fix F blocker 2: add `productionBrowserSourceMaps: true` to `next.config.ts` |
 | 7 | `git-repo-exposed` | ✅ Verified | Fired 2 findings on scan #10 (.git/HEAD + .git/config) |
 | 8 | `svn-repo-exposed` | ✅ Verified | Fired 3 findings on scan #10 (.svn/entries + .svn/wc.db + .svn/format) |
 
