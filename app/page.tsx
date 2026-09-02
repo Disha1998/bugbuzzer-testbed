@@ -99,7 +99,7 @@ const BATCHES = [
     id: "3",
     title: "JavaScript Runtime Errors",
     status: "Partial",
-    statusHint: "4 of 5 verified in scan #10 (2026-09-01) · row 38 needs separate /broken scan",
+    statusHint: "4 of 5 verified on Hostinger scan #14 · row 38 needs page fix (Fix K blocker 2)",
     checks: [
       { num: 1, name: "JavaScript exception thrown on page load" },
       { num: 2, name: "New JS error since last scan (regression check)" },
@@ -112,7 +112,7 @@ const BATCHES = [
     id: "4",
     title: "Public File Exposure",
     status: "Partial",
-    statusHint: "4 of 8 verified in scan #10 · 4 open fixes (F/G/H/I in fixes-backlog)",
+    statusHint: "5 of 8 verified on Hostinger scan #14 · 3 open fixes (F/G-row3/I in fixes-backlog)",
     checks: [
       { num: 1, name: "Backup files exposed (.sql / .zip / .tar.gz)" },
       { num: 2, name: ".env file exposed at root (with fake DB/API secrets)" },

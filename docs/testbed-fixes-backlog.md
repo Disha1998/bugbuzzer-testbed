@@ -4,7 +4,9 @@
 
 Follows Disha's "collect first, fix later" strategy — deploy vulnerabilities across all Phase A batches (2, 3, 4, 5, 6, 6b), collect open issues in each batch's MD, consolidate here, then work through this list in one focused fix session.
 
-_Last updated: 2026-09-01_
+_Last updated: 2026-09-02 (after Hostinger migration + scan #14)_
+
+> 🎉 **Hostinger migration resolved 4 fixes** — Fix A (Vercel bot), Fix D (BugBuzzer bug from Vercel infra), Fix G (docker-compose signature), Fix K (Vercel bot on /broken). Testbed now runs on `76.13.179.65` as a Docker container behind nginx — no more bot protection interference. See [hostinger-deployment.md](./hostinger-deployment.md).
 
 ---
 
@@ -18,12 +20,12 @@ _Last updated: 2026-09-01_
 
 ## Open fixes
 
-### Fix A — Unblock BugBuzzer scanner from Vercel bot protection
+### Fix A — Unblock BugBuzzer scanner from Vercel bot protection ✅ RESOLVED 2026-09-02
 
 - **From:** Batch 3 scans #7, #8, #9 (2026-08-31) — all got HTTP 403
 - **Owner:** Us (Disha)
-- **Priority:** 🔴 P1 (blocker — Batch 3 verification stuck, all future batches at risk)
-- **State:** ⬜ Open
+- **Priority:** 🔴 P1 (was blocker)
+- **State:** ✅ **RESOLVED via Option 4 — moved testbed to Hostinger VPS**
 
 **Fixes these issues:** 8 issues (all Batch 3 rows not verifying + Batch 1/2 regressions caused by scanner block)
 
@@ -100,12 +102,12 @@ _Last updated: 2026-09-01_
 
 ---
 
-### Fix D — Report BugBuzzer bug: `failed-network-requests` false positive on infra URLs
+### Fix D — Report BugBuzzer bug: `failed-network-requests` false positive on infra URLs ✅ RESOLVED for us
 
 - **From:** Batch 3 scans #7-9 (2026-08-31)
 - **Owner:** BugBuzzer team (Nirav)
-- **Priority:** 🟡 P2 (real bug, affects every Vercel-hosted customer scanned under bot protection)
-- **State:** ⬜ Open
+- **Priority:** 🟡 P2 (was blocking us; now moot for our testbed since we're off Vercel)
+- **State:** ✅ **RESOLVED for our testbed** (Hostinger has no `.well-known/vercel/...` URLs to trigger the false positive). Still a real BugBuzzer product bug affecting other Vercel-hosted customers — worth reporting to Nirav next chat.
 
 **What's wrong:** Check has no filter for platform infrastructure URLs (`.well-known/vercel/security/*`, `.well-known/cloudflare/*`, etc). When Vercel bot protection engages, its challenge endpoint's failure gets flagged as an app server error. False positive for the customer.
 
@@ -144,26 +146,24 @@ _Last updated: 2026-09-01_
 
 ---
 
-### Fix G — Batch 4 Rows 3 + 4 (exposed-config-files + exposed-docker-compose) — check didn't recognize content
+### Fix G — Batch 4 Rows 3 + 4 (exposed-config-files + exposed-docker-compose) — 🟡 Partially resolved
 
 - **From:** Batch 4 scan #10 (2026-09-01)
 - **Owner:** Us
 - **Priority:** 🟡 P2
-- **State:** ⬜ Open
+- **State:** 🟡 **Row 4 (docker-compose) ✅ RESOLVED 2026-09-02** — fires 3 findings on Hostinger scan #14. Row 3 (config-files) ⬜ still open.
 
-**What's wrong:** Middleware serves `/config.json`, `/settings.json`, `/appsettings.json`, `/secrets.json` and `/docker-compose.yml`, `/docker-compose.yaml`, `/compose.yml` all as HTTP 200 with real-looking content (verified with curl). But BugBuzzer's checks passed with "No publicly accessible JSON configuration files detected" / "No publicly accessible Docker Compose config files detected".
+**What's wrong for Row 3 (config-files):** Middleware serves `/config.json`, `/settings.json`, `/appsettings.json`, `/secrets.json` as HTTP 200 with real-looking content (verified with curl). But BugBuzzer's `exposed-config-files` check still passes with "No publicly accessible JSON configuration files detected".
 
-Two possibilities:
-1. BugBuzzer's checks look for specific content signatures we're not matching
-2. Response Content-Type isn't being preserved by Next.js middleware (curl showed no `content-type` header in my quick test — worth digging)
+**Why row 4 (docker-compose) started firing after Hostinger move:** unclear — maybe nginx sends proper Content-Type headers where Vercel didn't, or the check has a signature that matched our YAML on Hostinger. Either way, ✅ done.
 
-**Fix steps:**
-1. Read BugBuzzer's check source: `packages/check-catalog/src/checks/http-probe/exposed-config-files.ts` and `exposed-docker-compose.ts`
-2. Look at what response pattern each check requires (Content-Type? specific JSON keys? YAML structure?)
-3. Adjust `middleware.ts` EXPOSED_FILES entries — either fix Content-Type, add missing signatures, or structure content differently
+**Fix steps for Row 3 (config-files):**
+1. Read BugBuzzer's check source: `packages/check-catalog/src/checks/http-probe/exposed-config-files.ts`
+2. Look at what response pattern the check requires (Content-Type? specific JSON keys? file signature bytes?)
+3. Adjust `middleware.ts` FAKE_CONFIG_JSON — add missing signatures, or structure content differently
 4. Push, re-scan
 
-**Verification:** re-scan → both checks fire with expected findings.
+**Verification:** re-scan → `exposed-config-files` fires with 4 findings on config.json / settings.json / appsettings.json / secrets.json.
 
 ---
 
@@ -191,24 +191,29 @@ Also possible: BugBuzzer's check doesn't probe `/downloads` at all — it probab
 
 ---
 
-### Fix K — Batch 3 Row 38 (critical-page-blank-or-error) — /broken URL keeps hitting Vercel bot challenge
+### Fix K — Batch 3 Row 38 (critical-page-blank-or-error) — Vercel bot fixed, new blocker: Next.js layout wraps page
 
 - **From:** Batch 3 scan #11 (2026-09-01 — /broken URL scan)
 - **Owner:** Us
 - **Priority:** 🟡 P2
-- **State:** ⬜ Open
+- **State:** 🟡 **Blocker 1 (Vercel bot) ✅ RESOLVED via Hostinger move.** Blocker 2 (layout wrap) ⬜ still open.
 
-**What's wrong:** Every scan of `https://testbed.blockchainhq.xyz/broken` gets HTTP 403 from Vercel's bot challenge (verified across scans 6, 7, 8, and 11). Curl (normal client) gets HTTP 200 with our "Application Error" content. The check `critical-page-blank-or-error` reads the URL's content, but scanner sees Vercel's 403 challenge page instead of our error text.
+**Blocker 1 — Vercel bot challenge on /broken URL — ✅ RESOLVED 2026-09-02**
+- Was: `/broken` returned HTTP 403 to scanner (Vercel bot detection targeting rarely-visited paths)
+- Fix applied: moved off Vercel to Hostinger — nginx serves /broken cleanly with HTTP 200
+- Verified: Hostinger scan #13 (/broken) reached the page successfully
 
-Interestingly the HOMEPAGE didn't get bot-blocked in scan #10 or in current curls. Vercel's bot detection seems to trigger on the specific `/broken` URL — possibly because it's a rarely-visited path that pattern-matches "attacker enumeration".
+**Blocker 2 — Check still passes because Next.js layout adds too much content — ⬜ OPEN**
+- Hostinger scan #13: `critical-page-blank-or-error: passed - Page loaded with content and no critical blank or error state detected.`
+- Root cause: our `/broken/page.tsx` renders inside the root layout (nav, footer, styles). Total content is 15KB+ and doesn't match the check's "blank or error" heuristic. The check probably looks for either <500 bytes of content OR HTTP 5xx status.
+- Curl confirms: `/broken` returns HTTP 200 with 15KB HTML (full layout wrap).
 
-**Fix steps (cheapest first):**
-1. **Rename `/broken` to a less suspicious URL** — like `/status`, `/error-page`, or `/500`. Try `/error-page` first (mimics real error page URLs less scanner-suspicious than `/broken`). Update `app/broken/page.tsx` → `app/error-page/page.tsx`.
-2. **Alternative:** move the error content to the HOMEPAGE conditionally with a query param like `?error=1`. Homepage already scans successfully. But this pollutes the homepage.
-3. **Alternative:** put the error content behind a middleware route (e.g. `/api/render-error-page`) that returns error-styled HTML — middleware isn't rate-challenged as often.
-4. **Long-term:** Fix A (unblock Vercel bot protection globally) also resolves this.
+**Fix steps for blocker 2 (cheapest first):**
+1. **Return HTTP 500 for /broken** — real broken pages return 5xx. Add `notFound()` or explicit `throw new Error()` in `app/broken/page.tsx`, OR make it a route that intentionally throws. Check likely flags any 5xx.
+2. **Alternative:** create `app/broken/layout.tsx` that just passes through `{children}` without wrapping in `<html><body>...</body></html>` — strips the Next.js layout content
+3. **Alternative:** serve /broken via middleware with minimal HTML body (just "Application Error" + no layout)
 
-**Verification:** re-scan the new URL → `critical-page-blank-or-error` fires with 1 finding on our "Application Error" text.
+**Verification:** re-scan `/broken` → `critical-page-blank-or-error` fires with 1 finding.
 
 ---
 
@@ -273,10 +278,10 @@ Likely a transient BugBuzzer scanner-side issue with the http-baseline collector
 - Change State to ✅ Done
 - Move to a "Completed" section (or delete after the batch is fully verified)
 
-**Priority summary right now:**
-- 🔴 P1: Fix A (unblock scanner) — blocks all further progress
-- 🔴 P1 for BugBuzzer: Fix E (silent regression)
-- 🟡 P2: Fix B (mixed content), Fix C (CORS), Fix D (infra URL filter)
+**Priority summary right now (2026-09-02, after Hostinger migration):**
+- ✅ Resolved: Fix A (Vercel bot — moved to Hostinger), Fix D (moot for us), Fix G-row4 (docker-compose), Fix K-blocker1 (Vercel bot on /broken)
+- 🟡 P2 still open: Fix B (mixed content), Fix C (CORS), Fix F-blocker2 (Turbopack source maps), Fix G-row3 (config-files), Fix I (directory listing), Fix K-blocker2 (broken page layout wrap)
+- ⏸️ BugBuzzer team bugs to report: Fix E (silent regression when blocked), Fix J (http-baseline transient errors) — no longer affecting us but worth reporting
 
 ---
 

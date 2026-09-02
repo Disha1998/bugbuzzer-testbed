@@ -2,26 +2,27 @@
 
 **Purpose:** one single place to track every check. Update this whenever a batch is deployed, scanned, or completed. If the totals below ever drop below 121, something got lost — this file is the safety net.
 
-_Last updated: 2026-09-01 (after scan #10)_
+_Last updated: 2026-09-02 (after Hostinger migration + scans #13/#14)_
 
-> ✅ **Batch 3 unblocked and 4/5 rows verified** (2026-09-01). Vercel bot protection didn't kick in on scan #10 — scanner reached the site and fired our planted vulnerabilities correctly. Only row 38 remaining, needs separate scan of `/broken`.
+> 🎉 **Testbed moved to Hostinger VPS** (2026-09-02) — deployment now at `76.13.179.65` as Docker container behind nginx. No more Vercel bot protection interference. Scan #14 (homepage) found 36 real vulnerabilities, up from ~10 on Vercel. See [hostinger-deployment.md](./hostinger-deployment.md).
 >
-> 🟡 **Batch 4 partial — 4/8 verified** (2026-09-01). env / backup / git / svn all fire. 4 open fixes: source maps (Vercel toggle), config-files, docker-compose, directory-listing — see [testbed-fixes-backlog.md](./testbed-fixes-backlog.md) Fixes F-I.
+> ✅ **Batch 3 now 4/5 verified with full findings** — homepage scan #14 fires `js-exceptions-detected` (with our exact `throw new Error("Intentional test error - Batch 3")` in stack trace), `hydration-errors-detected` (React #418), `failed-network-requests` (our /api/does-not-exist-batch-3), and `js-exception-regression`. Only row 38 (blank-page) still open — page needs to return HTTP 500 or strip layout to trigger the check.
 >
-> ⚠️ **Scan #10 had 10 http-baseline errors** (Batch 2 rows) — BugBuzzer scanner-side blip, not our code. Batch 2 previous verifications still stand.
+> 🟡 **Batch 4 now 5/8 verified** — env / backup / git / svn / **docker-compose (new!)** all fire. 3 open fixes remaining: source maps (Turbopack), config-files (signature), directory-listing (layout).
+>
+> 🎁 **Bonus wins from Hostinger scan #14** — CVE checks now firing: 2 CISA KEV matches (CVE-2025-55182 Next.js RCE + CVE-2023-44487 Nginx HTTP/2 Rapid Reset), 8 Lodash CVEs, 12 outdated tech-stack CVEs. Server-version-disclosure fires 2 findings (nginx 1.24.0 + `X-Powered-By: Next.js`).
 
 ## Summary
 
 | Status | Count | Meaning |
 |---|---|---|
-| ✅ Verified | 46 | Check fires correctly on our testbed (scan confirmed) |
-| 🚀 Live | 1 | Deployed, needs additional scan of a different URL (row 38 `/broken`) |
-| 🟡 Open fix | 6 | Check should fire but doesn't yet — needs testbed code fix (Batch 2 rows + Batch 4 rows) |
+| ✅ Verified | 47 | Check fires correctly on our testbed (scan confirmed) |
+| 🟡 Open fix | 6 | Check should fire but doesn't yet — needs testbed code fix (rows 1/3 Batch 2, row 38 Batch 3, rows 2/4/6 Batch 4) |
 | ⬜ Pending | 46 | Batch not started yet, will be built in Phase A |
 | ⏸️ Phase B | 22 | Deferred to Phase B (needs VPS / throwaway domain / cloud accounts) |
 | **Total** | **121** | Should equal 121 |
 
-**Countdown:** 46 of 121 verified (38%). Big jump from 38 — Batch 3's 4 rows + Batch 4's 4 rows all verified this scan.
+**Countdown:** 47 of 121 verified (39%). +1 from previous count — Batch 4 row 4 (docker-compose) now fires on Hostinger.
 
 ## Batch 1 — Secrets in JS Bundle (7 checks)
 
@@ -56,7 +57,7 @@ _Last updated: 2026-09-01 (after scan #10)_
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `critical-page-blank-or-error` | 🟡 Open fix | Scanned `/broken` in scan #11 but Vercel returned HTTP 403 (bot challenge) → scanner saw challenge page not our error content. See Fix K in backlog — rename `/broken` to less suspicious URL |
+| 1 | `critical-page-blank-or-error` | 🟡 Open fix | Vercel bot blocker resolved (Hostinger). But scan #13 on Hostinger still passed — /broken has 15KB layout wrap, check heuristic sees plenty of content. Fix K blocker 2: return HTTP 500 or strip layout |
 | 2 | `failed-network-requests` | ✅ Verified | Fired on scan #10 pointing at our `/api/does-not-exist-batch-3` (correct) |
 | 3 | `hydration-errors-detected` | ✅ Verified | Fired on scan #10 as React 418 (our `Date.now()` mismatch, correct) |
 | 4 | `js-exception-regression` | ✅ Verified | Fired once (scan #7) when error was new. Correctly passes on later scans (error no longer new). Working as designed |
@@ -70,7 +71,7 @@ _Last updated: 2026-09-01 (after scan #10)_
 | 2 | `directory-listing-exposed` | 🟡 Open fix | Passed on scan #10. `/downloads` page renders inside Next.js layout (duplicate `<html>`, `server: Vercel`). See Fix I in backlog |
 | 3 | `env-file-exposed` | ✅ Verified | Fired 4 findings on scan #10 (.env + .env.local + .env.production + .env.development) |
 | 4 | `exposed-config-files` | 🟡 Open fix | Passed on scan #10 despite middleware serving JSON with fake secrets. Check likely needs specific content signature. See Fix G in backlog |
-| 5 | `exposed-docker-compose` | 🟡 Open fix | Same as row 4 — passed despite middleware serving fake YAML. See Fix G in backlog |
+| 5 | `exposed-docker-compose` | ✅ Verified | Fired 3 findings on Hostinger scan #14 (docker-compose.yml + docker-compose.yaml + compose.yml). Hostinger's nginx serves proper Content-Type where Vercel didn't |
 | 6 | `exposed-source-maps` | 🟡 Open fix | Vercel Protected Sourcemaps toggle now OFF ✅ (blocker 1 done). BUT `.js.map` files return HTTP 404 — Turbopack doesn't emit source maps in production. Fix F blocker 2: add `productionBrowserSourceMaps: true` to `next.config.ts` |
 | 7 | `git-repo-exposed` | ✅ Verified | Fired 2 findings on scan #10 (.git/HEAD + .git/config) |
 | 8 | `svn-repo-exposed` | ✅ Verified | Fired 3 findings on scan #10 (.svn/entries + .svn/wc.db + .svn/format) |
@@ -182,7 +183,7 @@ _Last updated: 2026-09-01 (after scan #10)_
 | 1 | `dkim-record-missing` | ✅ Verified | no email set up on domain |
 | 2 | `dmarc-missing-or-policy-none` | ✅ Verified | existing DMARC has p=none |
 | 3 | `dnssec-not-configured` | ✅ Verified | fires from BigRock DNS default |
-| 4 | `server-version-disclosure` | ✅ Verified | Vercel does not expose version |
+| 4 | `server-version-disclosure` | ✅ Verified | Hostinger nginx sends `Server: nginx/1.24.0 (Ubuntu)` + `X-Powered-By: Next.js` → check fires 2 findings (verified scan #14) |
 | 5 | `site-listed-on-blacklists` | ✅ Verified | testbed not on any blacklist |
 | 6 | `site-returning-error-status` | ✅ Verified | testbed returns 200 |
 | 7 | `site-unreachable` | ✅ Verified | testbed responds to baseline |

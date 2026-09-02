@@ -2,7 +2,7 @@
 
 This project deliberately embeds security vulnerabilities to test the BugBuzzer scanner. Each batch of vulnerabilities is documented so we can verify BugBuzzer detects them correctly.
 
-**Live testbed URL:** https://testbed.blockchainhq.xyz
+**Live testbed URL:** https://testbed.blockchainhq.xyz — deployed on **Hostinger VPS** (`76.13.179.65`) since 2026-09-02 as a Docker container behind nginx. See [hostinger-deployment.md](./hostinger-deployment.md).
 
 ---
 
@@ -14,8 +14,8 @@ Progress through the master sheet's 121 checks, one small batch at a time.
 |---|---|---|---|---|
 | 1 | Secrets in JS bundle (core 7) | 7 | ✅ Complete (scan #4, 7/7 detected) | [batch-01](./batches/batch-01-secrets-in-js-bundle.md) |
 | 2 | Web hygiene (headers, cookies, SSL, SRI) | 11 | 🟠 Partial — 7/9 verified · 2 open fixes · 3 deferred to Phase B | [batch-02](./batches/batch-02-web-hygiene.md) |
-| 3 | JavaScript runtime errors | 5 | ✅ 4/5 verified · row 38 needs separate `/broken` scan | [batch-03](./batches/batch-03-js-runtime-errors.md) |
-| 4 | Public file exposure | 8 | 🟠 Partial — 4/8 verified · 4 open fixes (F/G/H/I in backlog) | [batch-04](./batches/batch-04-public-file-exposure.md) |
+| 3 | JavaScript runtime errors | 5 | ✅ 4/5 verified on Hostinger scan #14 · row 38 needs page fix (Fix K) | [batch-03](./batches/batch-03-js-runtime-errors.md) |
+| 4 | Public file exposure | 8 | 🟠 Partial — 5/8 verified on Hostinger · 3 open fixes (F/G-row3/I) | [batch-04](./batches/batch-04-public-file-exposure.md) |
 | 5 | Auth & admin panels | 13 | ⬜ Pending | [batch-05](./batches/batch-05-auth-admin-panels.md) |
 | 6 | Injection probes (SSTI, XSS, SQLi, eval) | 8 | ⬜ Pending | [batch-06](./batches/batch-06-injection-probes.md) |
 | 6b | Extended secrets (V6 bundle + AI + webhooks) | 20 | ⬜ Pending | [batch-06b](./batches/batch-06b-extended-secrets.md) |
