@@ -82,7 +82,7 @@ const BATCHES = [
     id: "2",
     title: "Web Hygiene — headers, cookies, SSL, SRI",
     status: "Partial",
-    statusHint: "7 of 9 verified in scan #5 · 2 open fixes (rows 3+4) in fixes-backlog",
+    statusHint: "7 of 9 verified on Hostinger scan #14 · 2 open fixes (rows 3+4: mixed content + CORS) in fixes-backlog",
     checks: [
       { num: 1, name: "Security headers missing (CSP, HSTS, X-Frame, X-Content-Type, Referrer, Permissions)" },
       { num: 2, name: "security.txt file missing" },
