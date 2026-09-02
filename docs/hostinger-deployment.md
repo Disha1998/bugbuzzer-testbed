@@ -49,8 +49,17 @@ docker logs bugbuzzer-testbed --tail 50 -f
 cd /opt/bugbuzzer-testbed
 git pull
 docker build -t bugbuzzer-testbed:latest .
-docker restart bugbuzzer-testbed
+docker rm -f bugbuzzer-testbed
+docker run -d \
+  --name bugbuzzer-testbed \
+  --restart unless-stopped \
+  --log-opt max-size=10m \
+  --log-opt max-file=3 \
+  -p 127.0.0.1:3200:3000 \
+  bugbuzzer-testbed:latest
 ```
+
+**⚠️ Do NOT use `docker restart` after a rebuild.** `docker restart` just bounces the existing container using the OLD image — it does NOT pick up the freshly-built image. You MUST `docker rm -f` + `docker run` to actually deploy the new build. The tag `bugbuzzer-testbed:latest` only points to the new image; the running container's image is frozen at `docker run` time.
 
 **Stop testbed (for maintenance):**
 ```
