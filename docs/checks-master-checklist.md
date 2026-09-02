@@ -17,12 +17,13 @@ _Last updated: 2026-09-02 (after Hostinger migration + scans #13/#14)_
 | Status | Count | Meaning |
 |---|---|---|
 | ✅ Verified | 47 | Check fires correctly on our testbed (scan confirmed) |
+| 🚀 Live | 13 | Batch 5 deployed, awaiting first scan |
 | 🟡 Open fix | 6 | Check should fire but doesn't yet — needs testbed code fix (rows 1/3 Batch 2, row 38 Batch 3, rows 2/4/6 Batch 4) |
-| ⬜ Pending | 46 | Batch not started yet, will be built in Phase A |
-| ⏸️ Phase B | 22 | Deferred to Phase B (needs VPS / throwaway domain / cloud accounts) |
+| ⬜ Pending | 32 | Batches 6 + 6b not started yet, will be built in Phase A |
+| ⏸️ Phase B | 23 | Deferred to Phase B (needs VPS / throwaway domain / cloud accounts) — includes new deferral of `exposed-datastore` |
 | **Total** | **121** | Should equal 121 |
 
-**Countdown:** 47 of 121 verified (39%). +1 from previous count — Batch 4 row 4 (docker-compose) now fires on Hostinger.
+**Countdown:** 47 of 121 verified (39%) + 13 Live pending first scan. After Batch 5 scan lands: projected 60/121 (50%).
 
 ## Batch 1 — Secrets in JS Bundle (7 checks)
 
@@ -76,24 +77,24 @@ _Last updated: 2026-09-02 (after Hostinger migration + scans #13/#14)_
 | 7 | `git-repo-exposed` | ✅ Verified | Fired 2 findings on scan #10 (.git/HEAD + .git/config) |
 | 8 | `svn-repo-exposed` | ✅ Verified | Fired 3 findings on scan #10 (.svn/entries + .svn/wc.db + .svn/format) |
 
-## Batch 5 — Auth & Admin Panels (14 checks)
+## Batch 5 — Auth & Admin Panels (14 checks — 13 deployed, 1 deferred)
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `admin-or-debug-panel-exposed` | ⬜ Pending |  |
-| 2 | `dangerous-http-methods` | ⬜ Pending |  |
-| 3 | `debug-mode-enabled` | ⬜ Pending |  |
-| 4 | `default-credentials-on-services` | ⬜ Pending |  |
-| 5 | `exposed-ai-infra` | ⬜ Pending |  |
-| 6 | `exposed-datastore` | ⬜ Pending | may belong to Batch 5 |
-| 7 | `exposed-dev-tools` | ⬜ Pending |  |
-| 8 | `graphql-introspection-enabled` | ⬜ Pending |  |
-| 9 | `host-header-reflection` | ⬜ Pending |  |
-| 10 | `missing-rate-limiting-on-login` | ⬜ Pending |  |
-| 11 | `oauth-state-parameter-missing` | ⬜ Pending |  |
-| 12 | `open-redirect-vulnerability` | ⬜ Pending |  |
-| 13 | `unauthenticated-ai-proxy-endpoint` | ⬜ Pending |  |
-| 14 | `unauthenticated-api-endpoint` | ⬜ Pending |  |
+| 1 | `admin-or-debug-panel-exposed` | 🚀 Live | Middleware serves fake /admin, /administrator, /wp-admin, /phpmyadmin |
+| 2 | `dangerous-http-methods` | 🚀 Live | Middleware responds to OPTIONS with TRACE/PUT/DELETE/PATCH in Allow header |
+| 3 | `debug-mode-enabled` | 🚀 Live | Middleware serves fake Django debug page at /__debug__ and /debug |
+| 4 | `default-credentials-on-services` | 🚀 Live | /api/login accepts admin/admin, admin/password, root/root, administrator/administrator |
+| 5 | `exposed-ai-infra` | 🚀 Live | Middleware serves fake Langfuse (/langfuse) + MLflow (/mlflow) |
+| 6 | `exposed-datastore` | ⏸️ Phase B | Needs exposed database dashboards on subdomains (elasticsearch/mongodb/adminer via crt.sh enumeration) |
+| 7 | `exposed-dev-tools` | 🚀 Live | Middleware serves fake Storybook at /storybook |
+| 8 | `graphql-introspection-enabled` | 🚀 Live | /api/graphql + /graphql return full schema on introspection query |
+| 9 | `host-header-reflection` | 🚀 Live | /redirect-home reflects Host header into 302 redirect Location |
+| 10 | `missing-rate-limiting-on-login` | 🚀 Live | /api/login has no rate limit |
+| 11 | `oauth-state-parameter-missing` | 🚀 Live | GitHub OAuth authorize link on homepage with no `state` param |
+| 12 | `open-redirect-vulnerability` | 🚀 Live | /redirect?url=<any> redirects to arbitrary URL |
+| 13 | `unauthenticated-ai-proxy-endpoint` | 🚀 Live | /api/ai/chat returns OpenAI-shaped response for any prompt, no auth |
+| 14 | `unauthenticated-api-endpoint` | 🚀 Live | /api/users returns fake user records, no auth |
 
 ## Batch 6 — Injection Probes (10 checks)
 

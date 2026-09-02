@@ -101,6 +101,143 @@ const EXPOSED_FILES: Record<string, { body: string; type: string }> = {
 };
 
 // =============================================================================
+// Batch 5 - auth & admin panels. Fake admin panels, debug pages, dev tools,
+// AI infra dashboards. All fake HTML, no real login.
+// =============================================================================
+
+const FAKE_ADMIN_PANEL_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Admin Login - Testbed Admin Panel</title>
+</head>
+<body>
+<div class="admin-panel">
+<h1>Administrator Login</h1>
+<p>Please sign in to the admin console.</p>
+<form method="POST" action="/api/login" id="admin-login-form">
+  <label>Username: <input type="text" name="username" required></label>
+  <label>Password: <input type="password" name="password" required></label>
+  <button type="submit">Sign In</button>
+</form>
+<footer>Admin Panel v1.0 - Testbed</footer>
+</div>
+</body>
+</html>`;
+
+const FAKE_PHPMYADMIN_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>phpMyAdmin</title>
+</head>
+<body>
+<div id="phpmyadmin">
+<h1>phpMyAdmin</h1>
+<p>Welcome to phpMyAdmin 5.2.1</p>
+<form method="POST" action="/api/login" name="login_form">
+  <label>Username: <input type="text" name="pma_username"></label>
+  <label>Password: <input type="password" name="pma_password"></label>
+  <button type="submit">Go</button>
+</form>
+</div>
+</body>
+</html>`;
+
+const FAKE_DEBUG_PAGE_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DebugToolbar - Django Debug</title>
+</head>
+<body>
+<div id="djDebug" class="djdt-panelContent">
+<h1>DjangoDebugToolbar</h1>
+<p>Werkzeug Debugger enabled - do not use in production.</p>
+<pre>
+Traceback (most recent call last):
+  File "/app/views.py", line 42, in handle_request
+    result = compute_something()
+  File "/app/logic.py", line 88, in compute_something
+    raise ValueError("Fake debug traceback for testbed")
+ValueError: Fake debug traceback for testbed
+</pre>
+<div class="werkzeug-debugger">
+  <p>Console (interactive): DEBUG=True detected</p>
+</div>
+</body>
+</html>`;
+
+const FAKE_STORYBOOK_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Storybook - Component Library</title>
+</head>
+<body>
+<div id="storybook-root">
+<h1>Storybook</h1>
+<p>Storybook 7.6.0 - Component development environment</p>
+<nav class="storybook-sidebar">
+  <a href="#/story/button">Button</a>
+  <a href="#/story/card">Card</a>
+</nav>
+</div>
+<script>window.__STORYBOOK_CLIENT_API__ = { version: "7.6.0" };</script>
+</body>
+</html>`;
+
+const FAKE_LANGFUSE_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Langfuse - LLM Observability</title>
+</head>
+<body>
+<div id="langfuse-app">
+<h1>Langfuse</h1>
+<p>Open source LLM engineering platform.</p>
+<nav>
+  <a href="/traces">Traces</a>
+  <a href="/observations">Observations</a>
+  <a href="/prompts">Prompts</a>
+</nav>
+</div>
+</body>
+</html>`;
+
+const FAKE_MLFLOW_HTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MLflow</title>
+</head>
+<body>
+<div id="mlflow-app">
+<h1>MLflow</h1>
+<p>MLflow 2.9.0 - Machine learning lifecycle platform</p>
+<nav>
+  <a href="/experiments">Experiments</a>
+  <a href="/models">Models</a>
+</nav>
+</div>
+</body>
+</html>`;
+
+// Path → HTML body. Served for admin panels, debug pages, dev tools, AI infra.
+const FAKE_PANELS: Record<string, string> = {
+  "/admin": FAKE_ADMIN_PANEL_HTML,
+  "/administrator": FAKE_ADMIN_PANEL_HTML,
+  "/wp-admin": FAKE_ADMIN_PANEL_HTML,
+  "/phpmyadmin": FAKE_PHPMYADMIN_HTML,
+  "/__debug__": FAKE_DEBUG_PAGE_HTML,
+  "/debug": FAKE_DEBUG_PAGE_HTML,
+  "/storybook": FAKE_STORYBOOK_HTML,
+  "/langfuse": FAKE_LANGFUSE_HTML,
+  "/mlflow": FAKE_MLFLOW_HTML,
+};
+
+// =============================================================================
 // Batch 2 - session cookies (existing).
 // =============================================================================
 const FAKE_SESSION_ID = "tb27kQ8fpN9zXvBcYm4LjHrDsGeWqUiT";
@@ -112,12 +249,40 @@ const FAKE_LONG_LIVED_JWT =
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Batch 5 - dangerous HTTP methods. Respond to OPTIONS with an Allow header
+  // that includes TRACE + PUT + DELETE + PATCH so the check fires.
+  if (request.method === "OPTIONS") {
+    return new NextResponse(null, {
+      status: 200,
+      headers: {
+        Allow: "GET, HEAD, POST, PUT, DELETE, PATCH, TRACE, OPTIONS",
+        "Access-Control-Allow-Methods": "GET, HEAD, POST, PUT, DELETE, PATCH, TRACE, OPTIONS",
+      },
+    });
+  }
+
+  // Batch 5 - host header reflection. When scanner sends Host: evil.com,
+  // this route redirects to that host, leaking the reflection.
+  if (pathname === "/redirect-home") {
+    const host = request.headers.get("host") ?? request.nextUrl.host;
+    return NextResponse.redirect(`https://${host}/`, 302);
+  }
+
   // Batch 4 - if this path matches a known "attacker probe" URL, serve fake content.
   const exposed = EXPOSED_FILES[pathname];
   if (exposed) {
     return new NextResponse(exposed.body, {
       status: 200,
       headers: { "Content-Type": exposed.type },
+    });
+  }
+
+  // Batch 5 - fake admin panels, debug pages, dev tools, AI infra dashboards.
+  const panel = FAKE_PANELS[pathname];
+  if (panel) {
+    return new NextResponse(panel, {
+      status: 200,
+      headers: { "Content-Type": "text/html; charset=utf-8" },
     });
   }
 

@@ -7,6 +7,7 @@ import {
   nextauth_secret,
 } from "@/lib/fake-secrets";
 import { Batch3RuntimeVulns } from "@/components/batch-3-runtime-vulns";
+import { Batch5AuthVulns } from "@/components/batch-5-auth-vulns";
 
 // ⚠️ INTENTIONAL — the fake keys below are rendered directly into JSX so they
 // end up in BOTH the server-rendered HTML AND the client JS bundle. This is
@@ -124,7 +125,27 @@ const BATCHES = [
       { num: 8, name: "Directory listing enabled (fake 'Index of /' page at /downloads)" },
     ],
   },
-  { id: "5", title: "Auth & Admin Panels", status: "Pending", checks: [] },
+  {
+    id: "5",
+    title: "Auth & Admin Panels",
+    status: "Live",
+    statusHint: "13 checks deployed, awaiting first scan · exposed-datastore deferred to Phase B (needs subdomain infra)",
+    checks: [
+      { num: 1, name: "Admin / debug panels exposed (/admin, /phpmyadmin, /wp-admin)" },
+      { num: 2, name: "Dangerous HTTP methods (TRACE / PUT / DELETE in Allow header)" },
+      { num: 3, name: "Debug mode enabled (Django / Werkzeug debug pages)" },
+      { num: 4, name: "Default credentials accepted (admin/admin, root/root)" },
+      { num: 5, name: "Exposed AI infrastructure (Langfuse / MLflow)" },
+      { num: 6, name: "Exposed dev tools (Storybook)" },
+      { num: 7, name: "GraphQL introspection enabled" },
+      { num: 8, name: "Host header reflection into redirect" },
+      { num: 9, name: "Missing rate limiting on login endpoint" },
+      { num: 10, name: "OAuth authorize link missing state parameter (CSRF)" },
+      { num: 11, name: "Open redirect via ?url= parameter" },
+      { num: 12, name: "Unauthenticated AI proxy endpoint (/api/ai/chat)" },
+      { num: 13, name: "Unauthenticated API endpoint (/api/users)" },
+    ],
+  },
   { id: "6", title: "Injection Probes (SSTI, XSS, SQLi, eval)", status: "Pending", checks: [] },
   { id: "6b", title: "Extended Secrets (V6 bundle + AI + webhooks)", status: "Pending", checks: [] },
 ] as const;
@@ -287,6 +308,11 @@ export default function Home() {
 
       {/* Batch 3 — runtime vulnerabilities (JS error, failed fetch, hydration mismatch). */}
       <Batch3RuntimeVulns />
+
+      {/* Batch 5 — auth & admin panel vulnerabilities (links + on-load fetches
+          so the scanner discovers admin panels, unauth APIs, open redirect,
+          OAuth without state, GraphQL introspection, etc.). */}
+      <Batch5AuthVulns />
     </main>
   );
 }
