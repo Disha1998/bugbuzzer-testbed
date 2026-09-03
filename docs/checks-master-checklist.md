@@ -2,7 +2,7 @@
 
 **Purpose:** one single place to track every check. Update this whenever a batch is deployed, scanned, or completed. If the totals below ever drop below 121, something got lost — this file is the safety net.
 
-_Last updated: 2026-09-02 (after Batch 6 deployment)_
+_Last updated: 2026-09-02 (after Batch 6 first scan + Batch 6b deployment)_
 
 > 🎉 **Testbed moved to Hostinger VPS** (2026-09-02) — deployment now at `76.13.179.65` as Docker container behind nginx. No more Vercel bot protection interference. Scan #14 (homepage) found 36 real vulnerabilities, up from ~10 on Vercel. See [hostinger-deployment.md](./hostinger-deployment.md).
 >
@@ -16,14 +16,14 @@ _Last updated: 2026-09-02 (after Batch 6 deployment)_
 
 | Status | Count | Meaning |
 |---|---|---|
-| ✅ Verified | 52 | Check fires correctly on our testbed (scan confirmed) |
-| 🚀 Live | 10 | Batch 6 deployed, awaiting first scan |
-| 🟡 Open fix | 14 | Check should fire but doesn't yet — needs testbed code tweak (see backlog Fixes B, C, F blocker 2, G row 3, I, K blocker 2, L) |
-| ⬜ Pending | 22 | Batch 6b (Extended Secrets) not started yet |
+| ✅ Verified | 56 | Check fires correctly on our testbed (scan confirmed) |
+| 🚀 Live | 22 | Batch 6b deployed, awaiting first scan |
+| 🟡 Open fix | 20 | Check should fire but doesn't yet — needs testbed code tweak (see backlog Fixes B, C, F blocker 2, G row 3, I, K blocker 2, L, M) |
+| ⬜ Pending | 0 | All Phase A batches deployed! |
 | ⏸️ Phase B | 23 | Deferred to Phase B (needs VPS / throwaway domain / cloud accounts) — includes `exposed-datastore` |
 | **Total** | **121** | Should equal 121 |
 
-**Countdown:** 52 of 121 verified (43%) + 10 Batch 6 Live pending scan. After Batch 6 scan lands (projected 8-10 more verified): ~60-62/121 (50%).
+**Countdown:** 56 of 121 verified (46%). Batch 6 first scan added 4 verified. Batch 6b (22 checks) deployed and pending first scan — projected 18-22 more verified → ~74-78/121 (~62%) after next scan. **Phase A code deployment COMPLETE.** All that remains: Batch 6b scan verification, backlog fixes (Fix L + Fix M), and Phase B.
 
 ## Batch 1 — Secrets in JS Bundle (7 checks)
 
@@ -100,43 +100,43 @@ _Last updated: 2026-09-02 (after Batch 6 deployment)_
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `ai-endpoint-model-parameter-override` | 🚀 Live | /api/ai/chat echoes requested `model` param in response |
-| 2 | `error-based-sql-injection` | 🚀 Live | /api/user?id= returns fake MySQL error on quote / UNION / OR 1=1 |
-| 3 | `llm-direct-prompt-injection-vulnerable` | 🚀 Live | /api/ai/chat leaks fake system prompt on "ignore previous" phrases |
-| 4 | `nodejs-eval-code-injection` | 🚀 Live | /api/eval?expr= computes simple math (7*7 → 49) |
-| 5 | `os-command-injection` | 🚀 Live | /api/shell?cmd= returns fake `id`, `whoami`, `cat /etc/passwd` output |
-| 6 | `python-eval-code-injection` | 🚀 Live | /api/py?code= returns fake Python output for `__import__('os')...` payloads |
-| 7 | `reflected-xss-in-url-parameters` | 🚀 Live | /search?q= renders input via dangerouslySetInnerHTML (unescaped) |
-| 8 | `server-side-template-injection` | 🚀 Live | /render?tpl= evaluates {{7*7}}, ${7*7}, <%= 7*7 %> syntax |
-| 9 | `time-based-blind-sql-injection` | 🚀 Live | /api/user?id= sleeps N seconds on SLEEP(N)/WAITFOR/pg_sleep |
-| 10 | `vite-dev-server-file-read` | 🚀 Live | Middleware serves fake Vite /@vite/client + /@fs/* file read |
+| 1 | `ai-endpoint-model-parameter-override` | 🟡 Open fix | Progress on scan #16 — override response echoed sentinel model name. Needs error marker in response (`{"error":{"type":"invalid_request_error","message":"model 'xxx' does not exist"}}`). See Fix M |
+| 2 | `error-based-sql-injection` | 🟡 Open fix | Passed on scan #16 — "no_error=7 across 8 probed params". Our JSON error format doesn't match check heuristic. See Fix M — return plain-text error strings |
+| 3 | `llm-direct-prompt-injection-vulnerable` | 🟡 Open fix | Passed on scan #16 — our "ignore previous" phrases don't match check's exact probe patterns. See Fix M |
+| 4 | `nodejs-eval-code-injection` | 🟡 Open fix | Skipped on scan #16 — "reflected_only=6" — result echoed but not recognized as eval sink. See Fix M |
+| 5 | `os-command-injection` | ✅ Verified | Fired 1 finding on scan #16 — injected shell delay scaled with requested sleep (base 3s→+3001ms, 6s→+6002ms) |
+| 6 | `python-eval-code-injection` | 🟡 Open fix | Same pattern as nodejs-eval — needs different response shape. See Fix M |
+| 7 | `reflected-xss-in-url-parameters` | ✅ Verified | Fired 1 finding on scan #16 — /search?q= confirmed unescaped breakout in html_text context |
+| 8 | `server-side-template-injection` | ✅ Verified | Fired 1 finding on scan #16 — /render?tpl= evaluated scanner's `{{4232*4202}}` → 17768104 in response |
+| 9 | `time-based-blind-sql-injection` | ✅ Verified | Fired 1 finding on scan #16 — /api/user?id= scaling-delay proof confirmed |
+| 10 | `vite-dev-server-file-read` | 🟡 Open fix | Passed on scan #16 — "Vite dev server not detected". Fake /@vite/client + /@fs/* need proper Vite fingerprint headers. See Fix M |
 
-## Batch 6b — Extended Secrets (22 checks)
+## Batch 6b — Extended Secrets (22 checks — all deployed)
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `agentmail-api-key-in-js-bundle` | ⬜ Pending |  |
-| 2 | `analytics-provider-keys-in-js-bundle` | ⬜ Pending |  |
-| 3 | `auth-provider-keys-in-js-bundle` | ⬜ Pending |  |
-| 4 | `cloud-infra-provider-keys-in-js-bundle` | ⬜ Pending |  |
-| 5 | `cms-media-provider-keys-in-js-bundle` | ⬜ Pending |  |
-| 6 | `crm-provider-keys-in-js-bundle` | ⬜ Pending |  |
-| 7 | `database-provider-keys-in-js-bundle` | ⬜ Pending |  |
-| 8 | `dev-collab-tokens-in-js-bundle` | ⬜ Pending |  |
-| 9 | `email-provider-keys-in-js-bundle` | ⬜ Pending |  |
-| 10 | `generic-public-env-secret-in-js-bundle` | ⬜ Pending |  |
-| 11 | `jwt-weak-signing-secret` | ⬜ Pending |  |
-| 12 | `llm-providers-api-key-in-js-bundle` | ⬜ Pending |  |
-| 13 | `maps-provider-keys-in-js-bundle` | ⬜ Pending |  |
-| 14 | `netlify-pat-in-js-bundle` | ⬜ Pending |  |
-| 15 | `observability-provider-keys-in-js-bundle` | ⬜ Pending |  |
-| 16 | `payment-provider-keys-in-js-bundle` | ⬜ Pending |  |
-| 17 | `realtime-flags-provider-keys-in-js-bundle` | ⬜ Pending |  |
-| 18 | `search-provider-keys-in-js-bundle` | ⬜ Pending |  |
-| 19 | `sensitive-data-in-initial-payload` | ⬜ Pending |  |
-| 20 | `vector-db-keys-in-js-bundle` | ⬜ Pending |  |
-| 21 | `voice-ai-keys-in-js-bundle` | ⬜ Pending |  |
-| 22 | `webhook-urls-in-js-bundle` | ⬜ Pending |  |
+| 1 | `agentmail-api-key-in-js-bundle` | 🚀 Live | Fake `agm_live_...` key in bundle |
+| 2 | `analytics-provider-keys-in-js-bundle` | 🚀 Live | Mixpanel + PostHog (phx_) + Amplitude + Segment fake keys |
+| 3 | `auth-provider-keys-in-js-bundle` | 🚀 Live | Auth0 M2M + Clerk (sk_live_) + WorkOS fake keys |
+| 4 | `cloud-infra-provider-keys-in-js-bundle` | 🚀 Live | Fly.io (fo1_) + Render (rnd_) + Railway fake keys |
+| 5 | `cms-media-provider-keys-in-js-bundle` | 🚀 Live | Contentful (CFPAT-) + Cloudinary URL + Sanity (sk) fake keys |
+| 6 | `crm-provider-keys-in-js-bundle` | 🚀 Live | HubSpot (pat-) + Salesforce session ID fake keys |
+| 7 | `database-provider-keys-in-js-bundle` | 🚀 Live | PlanetScale (pscale_pw_) + Neon (npg_) + Turso fake keys |
+| 8 | `dev-collab-tokens-in-js-bundle` | 🚀 Live | Linear (lin_api_) + Notion (secret_) + Figma (figd_) fake keys |
+| 9 | `email-provider-keys-in-js-bundle` | 🚀 Live | Postmark + Mailgun (key-) + Brevo (xkeysib-) + Loops fake keys |
+| 10 | `generic-public-env-secret-in-js-bundle` | 🚀 Live | NEXT_PUBLIC_* variables with secret-shaped values |
+| 11 | `jwt-weak-signing-secret` | 🚀 Live | authtoken cookie JWT signed with weak secret "secret" |
+| 12 | `llm-providers-api-key-in-js-bundle` | 🚀 Live | Groq (gsk_) + Together AI + Replicate (r8_) + Perplexity (pplx-) |
+| 13 | `maps-provider-keys-in-js-bundle` | 🚀 Live | Google Maps (AIza) + Mapbox secret (sk.) fake keys |
+| 14 | `netlify-pat-in-js-bundle` | 🚀 Live | Fake `nfp_...` PAT in bundle |
+| 15 | `observability-provider-keys-in-js-bundle` | 🚀 Live | Sentry DSN + Datadog + New Relic (NRAK-) fake keys |
+| 16 | `payment-provider-keys-in-js-bundle` | 🚀 Live | PayPal secret + Razorpay (rzp_live_) + Square (EAAA) fake keys |
+| 17 | `realtime-flags-provider-keys-in-js-bundle` | 🚀 Live | Pusher + LaunchDarkly (sdk-) + Ably fake keys |
+| 18 | `search-provider-keys-in-js-bundle` | 🚀 Live | Algolia admin + Meilisearch master + Typesense admin fake keys |
+| 19 | `sensitive-data-in-initial-payload` | 🚀 Live | Password hashes ($2b$10$...) + DB connection URLs rendered in server HTML |
+| 20 | `vector-db-keys-in-js-bundle` | 🚀 Live | Pinecone + Weaviate + Qdrant fake keys |
+| 21 | `voice-ai-keys-in-js-bundle` | 🚀 Live | ElevenLabs (sk_) + Deepgram + AssemblyAI fake keys |
+| 22 | `webhook-urls-in-js-bundle` | 🚀 Live | Slack incoming webhook + Discord webhook URLs |
 
 ## Batch 7 — WordPress CVEs (Phase B) (6 checks)
 

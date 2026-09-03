@@ -1,68 +1,138 @@
-# Batch 6b — Extended Secrets (V6 Bundle + AI + Webhooks + Provider Keys)
+# Batch 6b — Extended Secrets (V6 bundle + AI + webhooks)
 
-**Category:** Secrets & Keys in JS Bundle (extended provider coverage)
-**Master sheet rows:** 265, 290, 296, 297, 298, 300, 301, 302, 303, 304, 305, 306, 307, 308, 309, 310, 311, 312, 313, 314
-**BugBuzzer checks tested:** 20
-**Date added to testbed:** _pending_
-**Status:** ⬜ Pending
+## Status at a glance — 2026-09-02 (deployed, awaiting first scan)
+
+**Batch complete? NO — 22 rows deployed, first scan pending**
+- All 22 planted vulns live on Hostinger deployment
+- No rows deferred
+- Ready to scan `https://testbed.blockchainhq.xyz`
+
+**Category breakdown (22 rows):**
+- 15 provider API key categories (analytics, auth, cloud-infra, cms-media, crm, database, dev-collab, email, llm, maps, netlify, observability, payment, realtime-flags, search, vector-db, voice-ai, agentmail)
+- 2 special detection classes (generic-public-env, jwt-weak-signing-secret)
+- 1 outgoing webhook URLs (Slack + Discord)
+- 1 sensitive-data-in-initial-payload (password hashes + DB URLs in server HTML)
+- 1 already-verified in earlier scans: agentmail (also listed here)
+
+---
+
+**Category:** Extended secret detection (V6 bundle categories)
+**BugBuzzer checks tested:** 22 (full Batch 6b)
+**Branch:** merged direct to main (no branch)
+**Date added to testbed:** 2026-09-02
 
 ---
 
 ## What this batch tests
 
-Same as Batch 1 (secrets in JS bundle) but for the 20 provider-specific checks — Vector DB keys, Auth providers, Cloud/Hosting tokens, CMS credentials, CRM tokens, DB connection strings, Dev/collab tokens, Email/SMS, Maps, Observability, Payments, Realtime, Search.
+Batch 1 covered the "core 7" secrets everyone leaks (OpenAI, Anthropic, Stripe, Supabase, AWS, GitHub, JWT). Batch 6b covers the next 22 categories — all the second-tier services that also commonly get leaked in client bundles:
+- LLM providers beyond OpenAI/Anthropic (Groq, Together, Replicate, Perplexity)
+- Vector DBs (Pinecone, Weaviate, Qdrant)
+- Observability + analytics (Sentry, Datadog, Mixpanel, PostHog, Amplitude)
+- Auth providers (Auth0, Clerk, WorkOS)
+- CMS + media (Contentful, Cloudinary, Sanity)
+- Payment providers (PayPal, Razorpay, Square)
+- ... and more
+
+Also 3 special-shape checks:
+- `jwt-weak-signing-secret` — authtoken cookie JWT signed with weak secret "secret" (BugBuzzer's dictionary attack will crack it)
+- `generic-public-env-secret-in-js-bundle` — `NEXT_PUBLIC_*` variables with secret-shaped values (a very common leak pattern)
+- `sensitive-data-in-initial-payload` — password hashes + database connection URLs rendered in server HTML (SSR leak)
+
+**All values FAKE** — verified by BugBuzzer's liveness probes (real providers reject them).
 
 ---
 
-## Vulnerabilities to bake in
+## Vulnerabilities baked in
 
-Extend `lib/fake-secrets.ts` with one fake key per provider. Follow real prefix formats.
-
-| # | Row | Check Name | Fake prefix example |
-|---|---|---|---|
-| 1 | 265 | Additional secret types in bundle | `NEXT_PUBLIC_MY_CUSTOM_SECRET=<high-entropy>` |
-| 2 | 290 | AgentMail API key | `am-xxx` (verify format from AgentMail docs) |
-| 3 | 296 | xAI / Mistral / Groq / Together / Perplexity / Cohere LLM keys | `xai-xxx`, `gsk_xxx`, `pplx-xxx`, etc. |
-| 4 | 297 | Vector DB API key (Pinecone / Weaviate / Qdrant / Chroma / Turbopuffer) | Pinecone starts with UUID |
-| 5 | 298 | Voice AI provider key (Vapi / Retell / Bland / ElevenLabs) | ElevenLabs: `sk_` prefix |
-| 6 | 300 | Netlify PAT | `nfp_xxx` |
-| 7 | 301 | Webhook URL in JS bundle | `hooks.slack.com/services/T.../B.../xxx` |
-| 8 | 302 | Product Analytics Secret (PostHog / Segment server) | `phc_` for PostHog, `wsec_` for Segment |
-| 9 | 303 | Auth Provider Secret (Clerk / Auth0 / Okta / WorkOS / Stytch) | `sk_test_` or `sk_live_` |
-| 10 | 304 | Cloud / Hosting Provider Token (DO / Vercel / Heroku / Fastly / CF) | Vercel: `xxx`, CF: `Bearer xxx` |
-| 11 | 305 | CMS / Media Provider Credential (Contentful / Sanity / Cloudinary etc.) | Contentful management: `CFPAT-xxx` |
-| 12 | 306 | CRM / Forms Provider Token (HubSpot / Typeform / Intercom etc.) | HubSpot: `pat-` |
-| 13 | 307 | Serverless Database Credential (PlanetScale / MongoDB / Postgres etc.) | `mongodb+srv://user:pass@host/db` |
-| 14 | 308 | Developer / Collaboration Token (npm / Docker / Notion / Linear / Figma / Slack / Airtable) | npm: `npm_xxx`, Notion: `secret_xxx` |
-| 15 | 309 | Email / SMS Provider (Mailgun / Brevo / MailerSend / Mailchimp / Twilio) | Twilio: `AC` prefix + auth token |
-| 16 | 310 | Maps Provider Secret (Mapbox / Radar) | Mapbox secret: `sk.` prefix |
-| 17 | 311 | Observability Provider Token (Sentry / Grafana / New Relic / Datadog / Rollbar) | Sentry auth: `sntrys_xxx` |
-| 18 | 312 | Payment Provider Secret (PayPal / Braintree / GoCardless / Square / Paddle / Razorpay etc.) | Provider-specific |
-| 19 | 313 | Realtime / Feature-Flag Secret (PubNub / Pusher / Agora / LaunchDarkly etc.) | LaunchDarkly: `sdk-` for server SDK |
-| 20 | 314 | Search Provider Admin Key (Algolia / Meilisearch / Typesense) | Algolia admin: 32-char hex |
+- **[`lib/fake-secrets-batch-6b.ts`](../../lib/fake-secrets-batch-6b.ts)** — all 22 categories of fake keys
+- **[`components/batch-6b-extended-secrets.tsx`](../../components/batch-6b-extended-secrets.tsx)** — renders all keys directly into JSX + inline `application/json` script (same trick as Batch 1)
+- **[`middleware.ts`](../../middleware.ts)** — updated `authtoken` cookie to JWT signed with weak secret "secret" (for `jwt-weak-signing-secret`)
 
 ---
 
 ## Expected BugBuzzer scan results
 
-_Fill in after implementation._
+Scan target: `https://testbed.blockchainhq.xyz`
+
+| Check | Expected finding count | Notes |
+|---|---|---|
+| agentmail-api-key-in-js-bundle | 1+ | `agm_live_...` fake key |
+| analytics-provider-keys-in-js-bundle | 3-4 | Mixpanel + PostHog + Amplitude + Segment |
+| auth-provider-keys-in-js-bundle | 2-3 | Auth0 + Clerk + WorkOS |
+| cloud-infra-provider-keys-in-js-bundle | 2-3 | Fly.io + Render + Railway |
+| cms-media-provider-keys-in-js-bundle | 2-3 | Contentful + Cloudinary + Sanity |
+| crm-provider-keys-in-js-bundle | 1-2 | HubSpot + Salesforce |
+| database-provider-keys-in-js-bundle | 2-3 | PlanetScale + Neon + Turso |
+| dev-collab-tokens-in-js-bundle | 2-3 | Linear + Notion + Figma |
+| email-provider-keys-in-js-bundle | 2-4 | Postmark + Mailgun + Brevo + Loops |
+| generic-public-env-secret-in-js-bundle | 1-2 | `NEXT_PUBLIC_STRIPE_SECRET` + `NEXT_PUBLIC_ADMIN_PASSWORD` |
+| jwt-weak-signing-secret | 1 | `authtoken` cookie cracks with dictionary secret "secret" |
+| llm-providers-api-key-in-js-bundle | 2-4 | Groq + Together + Replicate + Perplexity |
+| maps-provider-keys-in-js-bundle | 1-2 | Google Maps + Mapbox |
+| netlify-pat-in-js-bundle | 1 | `nfp_...` fake PAT |
+| observability-provider-keys-in-js-bundle | 2-3 | Sentry + Datadog + New Relic |
+| payment-provider-keys-in-js-bundle | 2-3 | PayPal + Razorpay + Square |
+| realtime-flags-provider-keys-in-js-bundle | 2-3 | Pusher + LaunchDarkly + Ably |
+| search-provider-keys-in-js-bundle | 2-3 | Algolia + Meilisearch + Typesense |
+| sensitive-data-in-initial-payload | 1-4 | Password hash + postgres/mysql/mongo URLs in server HTML |
+| vector-db-keys-in-js-bundle | 2-3 | Pinecone + Weaviate + Qdrant |
+| voice-ai-keys-in-js-bundle | 2-3 | ElevenLabs + Deepgram + AssemblyAI |
+| webhook-urls-in-js-bundle | 1-2 | Slack webhook + Discord webhook |
+
+**Total expected new findings: 40-60 across 22 checks.**
 
 ---
 
 ## Suggested fix (for real users)
 
-Same fix as Batch 1 — move all backend secrets out of client-side code, use server-side environment variables + backend API routes.
+For each finding kind, the user-facing report tells the customer:
+
+- **Any secret in JS bundle** → move to server-side env var (no `NEXT_PUBLIC_/VITE_` prefix), route calls through a server-side proxy
+- **Weak JWT signing secret** → rotate to cryptographically-strong random secret (`openssl rand -base64 32`)
+- **Sensitive data in initial payload** → never render password hashes / DB connection strings in server HTML — strip before serialization
+- **Public env with secret-shaped value** → audit every `NEXT_PUBLIC_*` var, move any that look like secrets to server-only
+- **Outgoing webhook URL exposed** → move webhooks to server-side, rotate the exposed webhook (attacker can spam your Slack)
 
 ---
 
 ## Actual scan results
 
-| Check # | Expected | Actual | Status |
+_Fill in after first scan._
+
+| Check | Expected | Actual | Status |
 |---|---|---|---|
-| 1-20 | Detected | | ⬜ |
+| agentmail-api-key-in-js-bundle | 1+ | | ⬜ |
+| analytics-provider-keys-in-js-bundle | 3-4 | | ⬜ |
+| auth-provider-keys-in-js-bundle | 2-3 | | ⬜ |
+| cloud-infra-provider-keys-in-js-bundle | 2-3 | | ⬜ |
+| cms-media-provider-keys-in-js-bundle | 2-3 | | ⬜ |
+| crm-provider-keys-in-js-bundle | 1-2 | | ⬜ |
+| database-provider-keys-in-js-bundle | 2-3 | | ⬜ |
+| dev-collab-tokens-in-js-bundle | 2-3 | | ⬜ |
+| email-provider-keys-in-js-bundle | 2-4 | | ⬜ |
+| generic-public-env-secret-in-js-bundle | 1-2 | | ⬜ |
+| jwt-weak-signing-secret | 1 | | ⬜ |
+| llm-providers-api-key-in-js-bundle | 2-4 | | ⬜ |
+| maps-provider-keys-in-js-bundle | 1-2 | | ⬜ |
+| netlify-pat-in-js-bundle | 1 | | ⬜ |
+| observability-provider-keys-in-js-bundle | 2-3 | | ⬜ |
+| payment-provider-keys-in-js-bundle | 2-3 | | ⬜ |
+| realtime-flags-provider-keys-in-js-bundle | 2-3 | | ⬜ |
+| search-provider-keys-in-js-bundle | 2-3 | | ⬜ |
+| sensitive-data-in-initial-payload | 1-4 | | ⬜ |
+| vector-db-keys-in-js-bundle | 2-3 | | ⬜ |
+| voice-ai-keys-in-js-bundle | 2-3 | | ⬜ |
+| webhook-urls-in-js-bundle | 1-2 | | ⬜ |
 
 ---
 
 ## Regression watch
 
-_Fill in after first successful scan._
+If any of these findings stops appearing on a future scan, investigate:
+
+- Was `Batch6bExtendedSecrets` accidentally removed from `app/page.tsx`?
+- Was `lib/fake-secrets-batch-6b.ts` deleted or the keys changed?
+- Did `.dockerignore` start excluding `lib/*` or `components/*`?
+- Did `authtoken` cookie in middleware get changed away from the weak-signed JWT?
+- Did Next.js update change how string literals get tree-shaken?

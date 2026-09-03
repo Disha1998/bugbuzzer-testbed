@@ -1,23 +1,27 @@
 # Batch 6 — Injection Probes
 
-## Status at a glance — 2026-09-02 (deployed, awaiting first scan)
+## Status at a glance — 2026-09-02 (after first scan #16)
 
-**Batch complete? NO — 10 rows deployed, first scan pending**
-- All 10 planted vulns live on Hostinger deployment
-- No rows deferred
-- Ready to scan `https://testbed.blockchainhq.xyz`
+**Batch complete? PARTIAL — 4 of 10 verified, 6 open fixes**
 
-**Rows deployed:**
-1. `reflected-xss-in-url-parameters` — `/search?q=` reflects into HTML via dangerouslySetInnerHTML
-2. `server-side-template-injection` — `/render?tpl=` evaluates `{{7*7}}`, `${7*7}`, `<%= 7*7 %>` syntax
-3. `error-based-sql-injection` — `/api/user?id=` returns fake MySQL error on quotes / UNION / OR 1=1
-4. `time-based-blind-sql-injection` — `/api/user?id=` sleeps N seconds on `SLEEP(N)`, `WAITFOR`, `pg_sleep(N)`
-5. `nodejs-eval-code-injection` — `/api/eval?expr=` returns computed result for simple math / Math.pow
-6. `python-eval-code-injection` — `/api/py?code=` returns fake `id` / `getcwd` output for `__import__('os')...`
-7. `os-command-injection` — `/api/shell?cmd=` returns fake `id`, `whoami`, `cat /etc/passwd` output
-8. `llm-direct-prompt-injection-vulnerable` — `/api/ai/chat` leaks fake system prompt on "ignore previous instructions"
-9. `ai-endpoint-model-parameter-override` — `/api/ai/chat` echoes requested `model` param in response
-10. `vite-dev-server-file-read` — middleware serves fake Vite `/@vite/client` + `/@fs/*` arbitrary file read
+**✅ Verified (4 rows firing):**
+1. `reflected-xss-in-url-parameters` — /search?q= confirmed unescaped breakout in html_text context
+2. `server-side-template-injection` — /render?tpl= evaluated scanner's `{{4232*4202}}` → 17768104 appeared in response
+3. `time-based-blind-sql-injection` — /api/user?id= "injected delay scaled with requested sleep (base 3s→+2987ms, 6s→+5980ms)"
+4. `os-command-injection` — /api/shell?cmd= "injected shell delay scaled with requested sleep"
+
+**🟡 Open fixes (6 rows) — all in [testbed-fixes-backlog.md](../testbed-fixes-backlog.md) under Fix M:**
+- `error-based-sql-injection` — scanner probed 8 params, "no_error=7, inconclusive=1" — our SQL error format doesn't match heuristic
+- `nodejs-eval-code-injection` — "reflected_only=6, inconclusive=2" — eval result echoed but not recognized as eval sink
+- `python-eval-code-injection` — same as nodejs-eval
+- `llm-direct-prompt-injection-vulnerable` — our "ignore previous" phrases don't match check's probe patterns
+- `ai-endpoint-model-parameter-override` — **progress!** — override response echoed sentinel model name, needs additional error marker
+- `vite-dev-server-file-read` — "Vite dev server not detected" — need proper Vite fingerprint (headers + asset structure)
+
+**Bonus wins from this scan:**
+- `unauthenticated-api-endpoint` now fires **8 findings** (up from 3) — Batch 6 endpoints (/api/user, /api/eval, /api/py, /api/shell) picked up
+- `subdomain-takeover` now cleanly passes (was skipped as inconclusive) — crt.sh probe worked, 16 subdomains scanned
+- `exposed-datastore` now cleanly passes (was skipped as inconclusive) — subdomain enum succeeded
 
 ---
 

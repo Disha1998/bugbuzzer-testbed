@@ -9,6 +9,7 @@ import {
 import { Batch3RuntimeVulns } from "@/components/batch-3-runtime-vulns";
 import { Batch5AuthVulns } from "@/components/batch-5-auth-vulns";
 import { Batch6InjectionVulns } from "@/components/batch-6-injection-vulns";
+import { Batch6bExtendedSecrets } from "@/components/batch-6b-extended-secrets";
 
 // ⚠️ INTENTIONAL — the fake keys below are rendered directly into JSX so they
 // end up in BOTH the server-rendered HTML AND the client JS bundle. This is
@@ -150,8 +151,8 @@ const BATCHES = [
   {
     id: "6",
     title: "Injection Probes (SSTI, XSS, SQLi, eval)",
-    status: "Live",
-    statusHint: "10 checks deployed, awaiting first scan",
+    status: "Partial",
+    statusHint: "4 of 10 verified on scan #16 · 6 open fixes (Fix M in backlog)",
     checks: [
       { num: 1, name: "Reflected XSS in URL parameters (/search?q=)" },
       { num: 2, name: "Server-side template injection (/render?tpl=)" },
@@ -165,7 +166,36 @@ const BATCHES = [
       { num: 10, name: "Vite dev-server file read (/@fs/*)" },
     ],
   },
-  { id: "6b", title: "Extended Secrets (V6 bundle + AI + webhooks)", status: "Pending", checks: [] },
+  {
+    id: "6b",
+    title: "Extended Secrets (V6 bundle + AI + webhooks)",
+    status: "Live",
+    statusHint: "22 checks deployed, awaiting first scan",
+    checks: [
+      { num: 1, name: "AgentMail API key" },
+      { num: 2, name: "Analytics provider keys (Mixpanel/PostHog/Amplitude/Segment)" },
+      { num: 3, name: "Auth provider keys (Auth0/Clerk/WorkOS)" },
+      { num: 4, name: "Cloud infra keys (Fly/Render/Railway)" },
+      { num: 5, name: "CMS/media provider keys (Contentful/Cloudinary/Sanity)" },
+      { num: 6, name: "CRM provider keys (HubSpot/Salesforce)" },
+      { num: 7, name: "Database provider keys (PlanetScale/Neon/Turso)" },
+      { num: 8, name: "Dev/collab tokens (Linear/Notion/Figma)" },
+      { num: 9, name: "Email provider keys (Postmark/Mailgun/Brevo/Loops)" },
+      { num: 10, name: "Generic public env secret (NEXT_PUBLIC_*)" },
+      { num: 11, name: "JWT signed with weak secret ('secret')" },
+      { num: 12, name: "LLM provider keys (Groq/Together/Replicate/Perplexity)" },
+      { num: 13, name: "Maps provider keys (Google Maps/Mapbox)" },
+      { num: 14, name: "Netlify PAT (nfp_)" },
+      { num: 15, name: "Observability keys (Sentry/Datadog/New Relic)" },
+      { num: 16, name: "Payment provider keys (PayPal/Razorpay/Square)" },
+      { num: 17, name: "Realtime/flags keys (Pusher/LaunchDarkly/Ably)" },
+      { num: 18, name: "Search provider keys (Algolia/Meilisearch/Typesense)" },
+      { num: 19, name: "Sensitive data in initial payload (password hashes + DB URLs)" },
+      { num: 20, name: "Vector DB keys (Pinecone/Weaviate/Qdrant)" },
+      { num: 21, name: "Voice AI keys (ElevenLabs/Deepgram/AssemblyAI)" },
+      { num: 22, name: "Webhook URLs (Slack/Discord)" },
+    ],
+  },
 ] as const;
 
 export default function Home() {
@@ -336,6 +366,9 @@ export default function Home() {
           ?expr=, ?tpl=, ?cmd=, ?code= parameters and probes each with real
           attack payloads). All server-side "execution" is fake pattern-match. */}
       <Batch6InjectionVulns />
+
+      {/* Batch 6b — 22 extended-secret fake keys rendered into the bundle. */}
+      <Batch6bExtendedSecrets />
     </main>
   );
 }

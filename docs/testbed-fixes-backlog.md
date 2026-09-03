@@ -270,6 +270,52 @@ Also possible: BugBuzzer's check doesn't probe `/downloads` at all — it probab
 
 ---
 
+### Fix M — Batch 6 open items (6 rows need refinement)
+
+- **From:** Batch 6 scan #16 (2026-09-02)
+- **Owner:** Us
+- **Priority:** 🟡 P2 (do in one focused session, alongside Fix L)
+- **State:** ⬜ Open
+
+**What's wrong:** all 6 rows below have vulnerable endpoints deployed, but BugBuzzer's checks have specific response-shape heuristics they need to match. Our current fake responses are close but not quite matching.
+
+**Sub-items:**
+
+**M.1 — `error-based-sql-injection`** — response format doesn't match check heuristic
+- Currently: /api/user?id=' returns JSON `{"error":"...MySQL server..."}` with HTTP 500
+- Scan said: "no_error=7, inconclusive_error=1 across 8 probed params"
+- Fix: return the SQL error string as PLAIN TEXT in response body (not wrapped in JSON), OR include specific keywords the check greps for (`Warning: mysql_`, `PostgreSQL query failed`, `SQLite3::SQLException`, `syntax error near`)
+
+**M.2 — `nodejs-eval-code-injection`** — result echoed but not recognized
+- Currently: /api/eval?expr=7*7 returns `{"input":"7*7","result":49}`
+- Scan said: "reflected_only=6, inconclusive_error=2"
+- Fix: return result as plain text (not JSON), OR match check's specific canary payload format. Read `packages/check-catalog/src/checks/*/nodejs-eval-code-injection.ts` to find the exact probe payload + expected response shape
+
+**M.3 — `python-eval-code-injection`** — same as M.2
+- Currently: /api/py?code=... returns JSON
+- Fix: same approach as M.2
+
+**M.4 — `llm-direct-prompt-injection-vulnerable`** — probe phrases don't match
+- Currently: /api/ai/chat detects "ignore previous" / "system prompt" / "jailbreak"
+- Scan said: "No direct prompt-injection succeeded"
+- Fix: read check source to find the exact prompts scanner sends, add matches for those specific phrases, ensure response includes something that looks like a leaked system prompt (specific markers the check greps for)
+
+**M.5 — `ai-endpoint-model-parameter-override`** — 90% there!
+- Currently: /api/ai/chat echoes requested `model` in response
+- Scan said: "override response echoed the sentinel model name but did not contain either an LLM-provider error marker (e.g. 'type:invalid_request_error', 'does not exist') or a server-side validation marker (e.g. 'not allowed', 'invalid field')"
+- Fix: when the requested model doesn't match a known-good model, return `{"error":{"type":"invalid_request_error","code":"model_not_found","message":"The model 'xxx' does not exist"}}` shape
+
+**M.6 — `vite-dev-server-file-read`** — Vite fingerprint not recognized
+- Currently: middleware serves /@vite/client + /@fs/* with fake content
+- Scan said: "Vite dev server not detected on target - file-read probe skipped"
+- Fix: add proper Vite response headers (`X-Powered-By: Vite`, specific module preload structure). Or accept we need real Vite install (defer to Phase B). Simpler test: return a Vite HMR client response body with the specific module shape (`import.meta.hot`, `createHotContext`)
+
+**Verification:** rescan → each of the 6 rows fires with at least 1 finding.
+
+**Estimated effort:** ~30-45 min for all 6 sub-items in one session (combined with Fix L for a single fix-cleanup session).
+
+---
+
 ### Fix J — Report BugBuzzer bug: http-baseline collector transient errors
 
 - **From:** Batch 4 scan #10 (2026-09-01)
@@ -333,7 +379,7 @@ Likely a transient BugBuzzer scanner-side issue with the http-baseline collector
 
 **Priority summary right now (2026-09-02, after Batch 5 first scan):**
 - ✅ Resolved: Fix A (Vercel bot — moved to Hostinger), Fix D (moot), Fix G-row4 (docker-compose), Fix K-blocker1 (Vercel bot on /broken)
-- 🟡 P2 still open: Fix B (mixed content), Fix C (CORS), Fix F-blocker2 (Turbopack source maps), Fix G-row3 (config-files), Fix I (directory listing), Fix K-blocker2 (broken page layout wrap), **Fix L (Batch 5 — 8 sub-items)**
+- 🟡 P2 still open: Fix B (mixed content), Fix C (CORS), Fix F-blocker2 (Turbopack source maps), Fix G-row3 (config-files), Fix I (directory listing), Fix K-blocker2 (broken page layout wrap), **Fix L (Batch 5 — 8 sub-items)**, **Fix M (Batch 6 — 6 sub-items)**
 - ⏸️ BugBuzzer team bugs to report: Fix E (silent regression when blocked), Fix J (http-baseline transient errors) — no longer affecting us but worth reporting
 
 ---

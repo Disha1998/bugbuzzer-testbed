@@ -241,10 +241,14 @@ const FAKE_PANELS: Record<string, string> = {
 // Batch 2 - session cookies (existing).
 // =============================================================================
 const FAKE_SESSION_ID = "tb27kQ8fpN9zXvBcYm4LjHrDsGeWqUiT";
+// Batch 6b - jwt-weak-signing-secret. JWT signed with HMAC-SHA256 using the
+// weak secret "secret". BugBuzzer's dictionary attack tries common weak
+// passwords - "secret" is on that list, so the check will fire.
+// Payload: { sub: "testbed-user", iat: 1735689600, exp: 4102444800 }
 const FAKE_LONG_LIVED_JWT =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
   "eyJzdWIiOiJ0ZXN0YmVkLXVzZXIiLCJpYXQiOjE3MzU2ODk2MDAsImV4cCI6NDEwMjQ0NDgwMH0." +
-  "kQ7pNv3wR9bZmY6xL2fJhU4nT8aC1sE5dV0yG7iOxRj";
+  "eVQ1xneoGRMskfjtt7j8E_EC7vkjkzj1cWHfX6QFb8o";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
