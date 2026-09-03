@@ -169,8 +169,8 @@ const BATCHES = [
   {
     id: "6b",
     title: "Extended Secrets (V6 bundle + AI + webhooks)",
-    status: "Live",
-    statusHint: "22 checks deployed, awaiting first scan",
+    status: "Partial",
+    statusHint: "10 of 22 verified on scan #17 · 12 open fixes (Fix N in backlog) · jwt-weak-signing fired!",
     checks: [
       { num: 1, name: "AgentMail API key" },
       { num: 2, name: "Analytics provider keys (Mixpanel/PostHog/Amplitude/Segment)" },

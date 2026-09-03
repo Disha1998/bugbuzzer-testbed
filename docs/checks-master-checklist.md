@@ -2,7 +2,7 @@
 
 **Purpose:** one single place to track every check. Update this whenever a batch is deployed, scanned, or completed. If the totals below ever drop below 121, something got lost — this file is the safety net.
 
-_Last updated: 2026-09-02 (after Batch 6 first scan + Batch 6b deployment)_
+_Last updated: 2026-09-03 (after Batch 6b first scan)_
 
 > 🎉 **Testbed moved to Hostinger VPS** (2026-09-02) — deployment now at `76.13.179.65` as Docker container behind nginx. No more Vercel bot protection interference. Scan #14 (homepage) found 36 real vulnerabilities, up from ~10 on Vercel. See [hostinger-deployment.md](./hostinger-deployment.md).
 >
@@ -16,14 +16,13 @@ _Last updated: 2026-09-02 (after Batch 6 first scan + Batch 6b deployment)_
 
 | Status | Count | Meaning |
 |---|---|---|
-| ✅ Verified | 56 | Check fires correctly on our testbed (scan confirmed) |
-| 🚀 Live | 22 | Batch 6b deployed, awaiting first scan |
-| 🟡 Open fix | 20 | Check should fire but doesn't yet — needs testbed code tweak (see backlog Fixes B, C, F blocker 2, G row 3, I, K blocker 2, L, M) |
+| ✅ Verified | 66 | Check fires correctly on our testbed (scan confirmed) |
+| 🟡 Open fix | 32 | Check should fire but doesn't yet — needs testbed code tweak (see backlog Fixes B, C, F blocker 2, G row 3, I, K blocker 2, L, M, N) |
 | ⬜ Pending | 0 | All Phase A batches deployed! |
 | ⏸️ Phase B | 23 | Deferred to Phase B (needs VPS / throwaway domain / cloud accounts) — includes `exposed-datastore` |
 | **Total** | **121** | Should equal 121 |
 
-**Countdown:** 56 of 121 verified (46%). Batch 6 first scan added 4 verified. Batch 6b (22 checks) deployed and pending first scan — projected 18-22 more verified → ~74-78/121 (~62%) after next scan. **Phase A code deployment COMPLETE.** All that remains: Batch 6b scan verification, backlog fixes (Fix L + Fix M), and Phase B.
+**Countdown:** 66 of 121 verified (55%). Batch 6b first scan added 10 verified (including jwt-weak-signing-secret cracking our weak-signed cookie!). 12 Batch 6b rows need real vendor-format tweaks (Fix N). **Phase A code deployment COMPLETE.** All that remains: work through Fixes B/C/F/G/I/K/L/M/N in one focused session, then Phase B.
 
 ## Batch 1 — Secrets in JS Bundle (7 checks)
 
@@ -115,28 +114,28 @@ _Last updated: 2026-09-02 (after Batch 6 first scan + Batch 6b deployment)_
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `agentmail-api-key-in-js-bundle` | 🚀 Live | Fake `agm_live_...` key in bundle |
-| 2 | `analytics-provider-keys-in-js-bundle` | 🚀 Live | Mixpanel + PostHog (phx_) + Amplitude + Segment fake keys |
-| 3 | `auth-provider-keys-in-js-bundle` | 🚀 Live | Auth0 M2M + Clerk (sk_live_) + WorkOS fake keys |
-| 4 | `cloud-infra-provider-keys-in-js-bundle` | 🚀 Live | Fly.io (fo1_) + Render (rnd_) + Railway fake keys |
-| 5 | `cms-media-provider-keys-in-js-bundle` | 🚀 Live | Contentful (CFPAT-) + Cloudinary URL + Sanity (sk) fake keys |
-| 6 | `crm-provider-keys-in-js-bundle` | 🚀 Live | HubSpot (pat-) + Salesforce session ID fake keys |
-| 7 | `database-provider-keys-in-js-bundle` | 🚀 Live | PlanetScale (pscale_pw_) + Neon (npg_) + Turso fake keys |
-| 8 | `dev-collab-tokens-in-js-bundle` | 🚀 Live | Linear (lin_api_) + Notion (secret_) + Figma (figd_) fake keys |
-| 9 | `email-provider-keys-in-js-bundle` | 🚀 Live | Postmark + Mailgun (key-) + Brevo (xkeysib-) + Loops fake keys |
-| 10 | `generic-public-env-secret-in-js-bundle` | 🚀 Live | NEXT_PUBLIC_* variables with secret-shaped values |
-| 11 | `jwt-weak-signing-secret` | 🚀 Live | authtoken cookie JWT signed with weak secret "secret" |
-| 12 | `llm-providers-api-key-in-js-bundle` | 🚀 Live | Groq (gsk_) + Together AI + Replicate (r8_) + Perplexity (pplx-) |
-| 13 | `maps-provider-keys-in-js-bundle` | 🚀 Live | Google Maps (AIza) + Mapbox secret (sk.) fake keys |
-| 14 | `netlify-pat-in-js-bundle` | 🚀 Live | Fake `nfp_...` PAT in bundle |
-| 15 | `observability-provider-keys-in-js-bundle` | 🚀 Live | Sentry DSN + Datadog + New Relic (NRAK-) fake keys |
-| 16 | `payment-provider-keys-in-js-bundle` | 🚀 Live | PayPal secret + Razorpay (rzp_live_) + Square (EAAA) fake keys |
-| 17 | `realtime-flags-provider-keys-in-js-bundle` | 🚀 Live | Pusher + LaunchDarkly (sdk-) + Ably fake keys |
-| 18 | `search-provider-keys-in-js-bundle` | 🚀 Live | Algolia admin + Meilisearch master + Typesense admin fake keys |
-| 19 | `sensitive-data-in-initial-payload` | 🚀 Live | Password hashes ($2b$10$...) + DB connection URLs rendered in server HTML |
-| 20 | `vector-db-keys-in-js-bundle` | 🚀 Live | Pinecone + Weaviate + Qdrant fake keys |
-| 21 | `voice-ai-keys-in-js-bundle` | 🚀 Live | ElevenLabs (sk_) + Deepgram + AssemblyAI fake keys |
-| 22 | `webhook-urls-in-js-bundle` | 🚀 Live | Slack incoming webhook + Discord webhook URLs |
+| 1 | `agentmail-api-key-in-js-bundle` | 🟡 Open fix | Passed on scan #17 — our `agm_live_...` format doesn't match AgentMail's real key regex. See Fix N |
+| 2 | `analytics-provider-keys-in-js-bundle` | ✅ Verified | Fired 3 findings on scan #17 (PostHog personal `phx_` key detected). Mixpanel/Amplitude/Segment formats didn't match |
+| 3 | `auth-provider-keys-in-js-bundle` | 🟡 Open fix | Passed — Auth0 M2M + WorkOS formats don't match. Our Clerk `sk_live_` got detected as **Stripe** instead (false-positive overlap in Stripe check). See Fix N |
+| 4 | `cloud-infra-provider-keys-in-js-bundle` | 🟡 Open fix | Passed — Fly (fo1_) + Render (rnd_) + Railway formats don't match. See Fix N |
+| 5 | `cms-media-provider-keys-in-js-bundle` | ✅ Verified | Fired 6 findings on scan #17 (Contentful CMA + Cloudinary URL). Sanity token didn't match. |
+| 6 | `crm-provider-keys-in-js-bundle` | ✅ Verified | Fired 3 findings on scan #17 (HubSpot PAT `pat-na1-` fired). Salesforce didn't match. |
+| 7 | `database-provider-keys-in-js-bundle` | ✅ Verified | Fired 9 findings on scan #17 (Neon Postgres + MySQL + Mongo connection strings). Bonus: also caught our `sensitive-data-in-initial-payload` DB URLs |
+| 8 | `dev-collab-tokens-in-js-bundle` | 🟡 Open fix | Passed — Linear (lin_api_) + Notion (secret_) + Figma (figd_) formats don't match. See Fix N |
+| 9 | `email-provider-keys-in-js-bundle` | 🟡 Open fix | Passed — Postmark UUID + Mailgun + Brevo + Loops formats don't match. See Fix N |
+| 10 | `generic-public-env-secret-in-js-bundle` | 🟡 Open fix | Passed — check likely wants actual `NEXT_PUBLIC_X="..."` variable declarations, not just strings in JSON. See Fix N |
+| 11 | `jwt-weak-signing-secret` | ✅ Verified | Fired 1 finding on scan #17 — "authtoken JWT signature reproduced offline using publicly-known secret from 103,781-entry wordlist" |
+| 12 | `llm-providers-api-key-in-js-bundle` | ✅ Verified | Fired 6 findings on scan #17 (Groq `gsk_` + Perplexity `pplx-`). Together AI + Replicate `r8_` didn't match. |
+| 13 | `maps-provider-keys-in-js-bundle` | ✅ Verified | Fired 3 findings on scan #17 (Mapbox secret `sk.` fired — even authenticated as live!). Google Maps `AIza` didn't match. |
+| 14 | `netlify-pat-in-js-bundle` | 🟡 Open fix | Passed — our `nfp_...` format doesn't match check regex. See Fix N |
+| 15 | `observability-provider-keys-in-js-bundle` | 🟡 Open fix | Passed — Sentry DSN + Datadog + New Relic (NRAK-) formats don't match. See Fix N |
+| 16 | `payment-provider-keys-in-js-bundle` | 🟡 Open fix | Passed — PayPal secret + Razorpay (rzp_live_) + Square (EAAA) formats don't match. See Fix N |
+| 17 | `realtime-flags-provider-keys-in-js-bundle` | ✅ Verified | Fired 3 findings on scan #17 (LaunchDarkly SDK `sdk-` key fired). Pusher + Ably didn't match. |
+| 18 | `search-provider-keys-in-js-bundle` | 🟡 Open fix | Passed — Algolia admin + Meilisearch master + Typesense admin formats don't match. See Fix N |
+| 19 | `sensitive-data-in-initial-payload` | 🟡 Open fix | Passed — check summary said "no password hashes or credentialed connection strings in server-rendered initial payload". Our DB URLs got picked up by `database-provider-keys` instead. Password hash `$2b$10$...` format didn't match. See Fix N |
+| 20 | `vector-db-keys-in-js-bundle` | 🟡 Open fix | Passed — Pinecone UUID + Weaviate + Qdrant formats don't match. See Fix N |
+| 21 | `voice-ai-keys-in-js-bundle` | ✅ Verified | Fired 2 findings on scan #17 (ElevenLabs `sk_` fired). Deepgram + AssemblyAI didn't match. |
+| 22 | `webhook-urls-in-js-bundle` | ✅ Verified | Fired 4 findings on scan #17 (Slack + Discord webhook URLs both detected) |
 
 ## Batch 7 — WordPress CVEs (Phase B) (6 checks)
 

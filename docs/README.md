@@ -18,7 +18,7 @@ Progress through the master sheet's 121 checks, one small batch at a time.
 | 4 | Public file exposure | 8 | 🟠 Partial — 5/8 verified on Hostinger · 3 open fixes (F/G-row3/I) | [batch-04](./batches/batch-04-public-file-exposure.md) |
 | 5 | Auth & admin panels | 14 | 🟠 Partial — 5/13 verified on scan #15 · 8 open fixes (Fix L) · 1 Phase B | [batch-05](./batches/batch-05-auth-admin-panels.md) |
 | 6 | Injection probes (SSTI, XSS, SQLi, eval, LLM, Vite) | 10 | 🟠 Partial — 4/10 verified on scan #16 · 6 open fixes (Fix M) | [batch-06](./batches/batch-06-injection-probes.md) |
-| 6b | Extended secrets (V6 bundle + AI + webhooks) | 22 | 🚀 Live — awaiting first scan | [batch-06b](./batches/batch-06b-extended-secrets.md) |
+| 6b | Extended secrets (V6 bundle + AI + webhooks) | 22 | 🟠 Partial — 10/22 verified on scan #17 · 12 open fixes (Fix N) | [batch-06b](./batches/batch-06b-extended-secrets.md) |
 | 7 | WordPress (needs separate WP install) | 7 | ⬜ Phase B | [batch-07](./batches/batch-07-wordpress-cves.md) |
 | 8 | Apache CVEs (needs separate VPS) | 2 | ⬜ Phase B | [batch-08](./batches/batch-08-apache-cves.md) |
 | 9 | Firebase + Supabase (real cloud) | 7 | ⬜ Phase B | [batch-09](./batches/batch-09-firebase-supabase.md) |

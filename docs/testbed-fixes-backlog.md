@@ -4,11 +4,11 @@
 
 Follows Disha's "collect first, fix later" strategy — deploy vulnerabilities across all Phase A batches (2, 3, 4, 5, 6, 6b), collect open issues in each batch's MD, consolidate here, then work through this list in one focused fix session.
 
-_Last updated: 2026-09-02 (after Batch 5 first scan)_
+_Last updated: 2026-09-03 (after Batch 6b first scan)_
 
 > 🎉 **Hostinger migration resolved 4 fixes** — Fix A (Vercel bot), Fix D (BugBuzzer bug from Vercel infra), Fix G row 4 (docker-compose signature), Fix K blocker 1 (Vercel bot on /broken). Testbed now runs on `76.13.179.65` as a Docker container behind nginx. See [hostinger-deployment.md](./hostinger-deployment.md).
 >
-> 🚀 **Batch 5 deployed** — 5 of 13 rows verified on scan #15. 8 rows need content-shape refinement — all bundled as **Fix L** below. 1 row deferred to Phase B.
+> ✅ **All Phase A batches deployed.** 66 of 121 checks verified (55%). Remaining Phase A work: fix backlog (Fixes B, C, F, G, I, K, L, M, **N** — 32 sub-items total) + then Phase B (~23 checks).
 
 ---
 
@@ -316,6 +316,75 @@ Also possible: BugBuzzer's check doesn't probe `/downloads` at all — it probab
 
 ---
 
+### Fix N — Batch 6b open items (12 rows need real vendor-format tweaks)
+
+- **From:** Batch 6b scan #17 (2026-09-03)
+- **Owner:** Us
+- **Priority:** 🟡 P2 (do alongside Fix L + Fix M in one focused session)
+- **State:** ⬜ Open
+
+**What's wrong:** 12 fake keys have plausible-looking prefixes but don't match the exact regex BugBuzzer's checks look for. Each vendor has a specific pattern (length, character class, prefix) that we need to match precisely.
+
+**Sub-items:**
+
+**N.1 — `agentmail-api-key-in-js-bundle`** — `agm_live_...` doesn't match. Investigate AgentMail's real key prefix at agentmail.to docs.
+
+**N.2 — `auth-provider-keys-in-js-bundle`** — Auth0 M2M + WorkOS don't match. Clerk `sk_live_` fired but got claimed by Stripe check (false positive we accept). Investigate Auth0 client-secret format + WorkOS `sk_live_workos_` prefix.
+
+**N.3 — `cloud-infra-provider-keys-in-js-bundle`** — Fly.io (`fo1_`) + Render (`rnd_`) + Railway don't match. Check real formats:
+- Fly.io deploy tokens: `FlyV1 fm2_...` (updated format)
+- Render API keys: `rnd_...` should match — verify actual prefix
+- Railway: uuid-shaped
+
+**N.4 — `dev-collab-tokens-in-js-bundle`** — Linear (`lin_api_`) + Notion (`secret_`) + Figma (`figd_`) don't match. Cross-check real prefixes:
+- Linear: `lin_api_` + 40-char hex
+- Notion: `ntn_` (new format) or `secret_` + 43-char base62
+- Figma: `figd_` + 32-char base62
+
+**N.5 — `email-provider-keys-in-js-bundle`** — Postmark UUID + Mailgun (`key-`) + Brevo (`xkeysib-`) + Loops don't match. Verify:
+- Mailgun: `key-` + 32-char hex OR API v4 key
+- Brevo: `xkeysib-` + 64-char hex
+- Postmark: exact UUID length + Server-Token header pattern
+- Loops: specific prefix
+
+**N.6 — `generic-public-env-secret-in-js-bundle`** — needs actual JS variable declarations, not string literals in JSON. Add script:
+```js
+window.NEXT_PUBLIC_STRIPE_SECRET_KEY = "sk_live_..."
+window.NEXT_PUBLIC_ADMIN_PASSWORD = "AdminP@ss..."
+```
+
+**N.7 — `netlify-pat-in-js-bundle`** — `nfp_...` doesn't match. Real Netlify PAT format may be different. Check docs.app.netlify.com.
+
+**N.8 — `observability-provider-keys-in-js-bundle`** — Sentry DSN + Datadog + New Relic don't match:
+- Sentry DSN: `https://<32-hex>@o<num>.ingest.sentry.io/<num>` (verify exact format)
+- Datadog API key: 32-char hex
+- New Relic license: `NRAK-` + 27-char + specific structure OR full 40-char format
+
+**N.9 — `payment-provider-keys-in-js-bundle`** — PayPal + Razorpay + Square don't match:
+- PayPal client secret: `E<uuid>` format (specific length)
+- Razorpay: `rzp_live_` or `rzp_test_` + 14-char base62
+- Square access token: `EAAA` + specific base64url length
+
+**N.10 — `search-provider-keys-in-js-bundle`** — Algolia + Meilisearch + Typesense don't match:
+- Algolia admin key: 32-char hex exactly
+- Meilisearch: may need specific prefix
+- Typesense: usually 32+ chars
+
+**N.11 — `sensitive-data-in-initial-payload`** — check wants password hashes + credentialed URLs in the SERVER-RENDERED HTML payload specifically. Our current placement got captured by `database-provider-keys-in-js-bundle` instead. Fix: put the sensitive data in a Next.js `<script id="__NEXT_DATA__">` or similar SSR-payload location that this specific check probes.
+
+**N.12 — `vector-db-keys-in-js-bundle`** — Pinecone (UUID) + Weaviate + Qdrant don't match. Check real formats:
+- Pinecone: `pcsk_` prefix (newer format)
+- Weaviate: JWT-shaped
+- Qdrant: specific header key
+
+**How to work through these:** for each sub-item, read the specific check source in `packages/check-catalog/src/checks/*` to find the exact regex → update `lib/fake-secrets-batch-6b.ts` value → rebuild + rescan → confirm.
+
+**Verification:** re-scan → each of the 12 rows fires with at least 1 finding.
+
+**Estimated effort:** ~1-2 hours for all 12 sub-items (mostly regex research + string updates).
+
+---
+
 ### Fix J — Report BugBuzzer bug: http-baseline collector transient errors
 
 - **From:** Batch 4 scan #10 (2026-09-01)
@@ -379,7 +448,8 @@ Likely a transient BugBuzzer scanner-side issue with the http-baseline collector
 
 **Priority summary right now (2026-09-02, after Batch 5 first scan):**
 - ✅ Resolved: Fix A (Vercel bot — moved to Hostinger), Fix D (moot), Fix G-row4 (docker-compose), Fix K-blocker1 (Vercel bot on /broken)
-- 🟡 P2 still open: Fix B (mixed content), Fix C (CORS), Fix F-blocker2 (Turbopack source maps), Fix G-row3 (config-files), Fix I (directory listing), Fix K-blocker2 (broken page layout wrap), **Fix L (Batch 5 — 8 sub-items)**, **Fix M (Batch 6 — 6 sub-items)**
+- 🟡 P2 still open: Fix B (mixed content), Fix C (CORS), Fix F-blocker2 (Turbopack source maps), Fix G-row3 (config-files), Fix I (directory listing), Fix K-blocker2 (broken page layout wrap), **Fix L (Batch 5 — 8 sub-items)**, **Fix M (Batch 6 — 6 sub-items)**, **Fix N (Batch 6b — 12 sub-items)**
+- **Total open fix sub-items: 32.** One focused fix session should close most of them.
 - ⏸️ BugBuzzer team bugs to report: Fix E (silent regression when blocked), Fix J (http-baseline transient errors) — no longer affecting us but worth reporting
 
 ---

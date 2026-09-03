@@ -1,18 +1,38 @@
 # Batch 6b — Extended Secrets (V6 bundle + AI + webhooks)
 
-## Status at a glance — 2026-09-02 (deployed, awaiting first scan)
+## Status at a glance — 2026-09-03 (after first scan #17)
 
-**Batch complete? NO — 22 rows deployed, first scan pending**
-- All 22 planted vulns live on Hostinger deployment
-- No rows deferred
-- Ready to scan `https://testbed.blockchainhq.xyz`
+**Batch complete? PARTIAL — 10 of 22 verified, 12 open fixes**
 
-**Category breakdown (22 rows):**
-- 15 provider API key categories (analytics, auth, cloud-infra, cms-media, crm, database, dev-collab, email, llm, maps, netlify, observability, payment, realtime-flags, search, vector-db, voice-ai, agentmail)
-- 2 special detection classes (generic-public-env, jwt-weak-signing-secret)
-- 1 outgoing webhook URLs (Slack + Discord)
-- 1 sensitive-data-in-initial-payload (password hashes + DB URLs in server HTML)
-- 1 already-verified in earlier scans: agentmail (also listed here)
+**✅ Verified (10 rows firing):**
+1. `jwt-weak-signing-secret` — big win! Scanner cracked our JWT signed with "secret" using 103,781-entry wordlist
+2. `analytics-provider-keys-in-js-bundle` — 3 findings (PostHog `phx_` personal key)
+3. `cms-media-provider-keys-in-js-bundle` — 6 findings (Contentful CMA + Cloudinary URL)
+4. `crm-provider-keys-in-js-bundle` — 3 findings (HubSpot PAT `pat-na1-`)
+5. `database-provider-keys-in-js-bundle` — **9 findings** (Neon Postgres + MySQL + Mongo connection strings, plus our SSR-payload DB URLs bonus-detected here)
+6. `llm-providers-api-key-in-js-bundle` — 6 findings (Groq `gsk_` + Perplexity `pplx-`)
+7. `maps-provider-keys-in-js-bundle` — 3 findings (Mapbox secret `sk.` — even confirmed as live!)
+8. `realtime-flags-provider-keys-in-js-bundle` — 3 findings (LaunchDarkly SDK `sdk-`)
+9. `voice-ai-keys-in-js-bundle` — 2 findings (ElevenLabs `sk_`)
+10. `webhook-urls-in-js-bundle` — 4 findings (Slack + Discord webhooks)
+
+**🟡 Open fixes (12 rows) — all in [testbed-fixes-backlog.md](../testbed-fixes-backlog.md) under Fix N:**
+- `agentmail` — `agm_live_...` format doesn't match
+- `auth-provider` — Auth0 + WorkOS don't match; Clerk got detected as Stripe (false positive)
+- `cloud-infra` — Fly/Render/Railway formats don't match
+- `dev-collab` — Linear/Notion/Figma formats don't match
+- `email-provider` — Postmark/Mailgun/Brevo/Loops formats don't match
+- `generic-public-env` — needs actual `NEXT_PUBLIC_X="..."` var declarations, not strings
+- `netlify-pat` — `nfp_...` doesn't match check regex
+- `observability` — Sentry DSN + Datadog + New Relic formats don't match
+- `payment-provider` — PayPal/Razorpay/Square formats don't match
+- `search-provider` — Algolia/Meilisearch/Typesense formats don't match
+- `sensitive-data-in-initial-payload` — our DB URLs got captured by database check; need SSR-payload-shaped hash
+- `vector-db` — Pinecone/Weaviate/Qdrant formats don't match
+
+**Bonus findings:**
+- `stripe-secret-key-in-js-bundle` now fires 6 findings (up from 3) — our Clerk `sk_live_` key overlaps Stripe's regex (Clerk detected AS Stripe, not as Clerk)
+- No js-exception-regression (correct behavior — no new console errors since prior scan)
 
 ---
 
