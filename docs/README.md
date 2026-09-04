@@ -21,7 +21,7 @@ Progress through the master sheet's 121 checks, one small batch at a time.
 | 6b | Extended secrets (V6 bundle + AI + webhooks) | 22 | 🟠 Partial — 10/22 verified on scan #17 · 12 open fixes (Fix N) | [batch-06b](./batches/batch-06b-extended-secrets.md) |
 | 7 | WordPress (needs separate WP install) | 7 | ⬜ Phase B | [batch-07](./batches/batch-07-wordpress-cves.md) |
 | 8 | Apache CVEs (needs separate VPS) | 2 | ⬜ Phase B | [batch-08](./batches/batch-08-apache-cves.md) |
-| 9 | Firebase + Supabase (real cloud) | 7 | ⬜ Phase B | [batch-09](./batches/batch-09-firebase-supabase.md) |
+| 9 | Firebase + Supabase (real cloud) | 6 | 🚀 Live (2026-09-04) — 5 checks wired · Firebase Storage deferred (Blaze) | [batch-09](./batches/batch-09-firebase-supabase.md) |
 | 10 | AWS S3 (real buckets) | 4 | ⬜ Phase B | [batch-10](./batches/batch-10-aws-s3.md) |
 
 **Phase A total (Batches 1-6b):** ~72 checks — all live in this single Next.js app.

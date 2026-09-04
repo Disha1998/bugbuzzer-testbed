@@ -159,12 +159,12 @@ _Last updated: 2026-09-03 (after Batch 6b first scan)_
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `firebase-rtdb-readable-without-authentication` | ⏸️ Phase B |  |
-| 2 | `firebase-storage-bucket-publicly-accessible` | ⏸️ Phase B |  |
-| 3 | `firestore-collection-publicly-readable` | ⏸️ Phase B |  |
-| 4 | `supabase-rpc-callable-by-anon` | ⏸️ Phase B |  |
-| 5 | `supabase-storage-bucket-publicly-accessible` | ⏸️ Phase B |  |
-| 6 | `supabase-table-readable-without-authentication` | ⏸️ Phase B |  |
+| 1 | `firebase-rtdb-readable-without-authentication` | 🚀 Live (2026-09-04) | RTDB `users/1` node at bugbuzzer-testbed-fb, test-mode rules; wired via `lib/phase-b-real-configs.ts` |
+| 2 | `firebase-storage-bucket-publicly-accessible` | ⏸️ Phase B — needs Blaze | Firebase forces Blaze billing since Nov 2024; deferred unless testbed goes paid |
+| 3 | `firestore-collection-publicly-readable` | 🚀 Live (2026-09-04) | Firestore `User` collection at bugbuzzer-testbed-fb, test-mode rules; wired via `lib/phase-b-real-configs.ts` |
+| 4 | `supabase-rpc-callable-by-anon` | 🚀 Live (2026-09-04) | `get_public_data` RPC, SECURITY INVOKER, anon-callable; wired via `lib/phase-b-real-configs.ts` |
+| 5 | `supabase-storage-bucket-publicly-accessible` | 🚀 Live (2026-09-04) | `public-uploads` bucket, Public toggle ON; wired via `lib/phase-b-real-configs.ts` |
+| 6 | `supabase-table-readable-without-authentication` | 🚀 Live (2026-09-04) | `users_public` table, RLS disabled, fake alice row; wired via `lib/phase-b-real-configs.ts` |
 
 ## Batch 10 — AWS S3 (Phase B) (5 checks)
 

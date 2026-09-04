@@ -10,6 +10,7 @@ import { Batch3RuntimeVulns } from "@/components/batch-3-runtime-vulns";
 import { Batch5AuthVulns } from "@/components/batch-5-auth-vulns";
 import { Batch6InjectionVulns } from "@/components/batch-6-injection-vulns";
 import { Batch6bExtendedSecrets } from "@/components/batch-6b-extended-secrets";
+import { Batch9PhaseBConfigs } from "@/components/batch-9-phase-b-configs";
 
 // ⚠️ INTENTIONAL — the fake keys below are rendered directly into JSX so they
 // end up in BOTH the server-rendered HTML AND the client JS bundle. This is
@@ -196,6 +197,20 @@ const BATCHES = [
       { num: 22, name: "Webhook URLs (Slack/Discord)" },
     ],
   },
+  {
+    id: "9",
+    title: "Firebase + Supabase (Phase B real cloud)",
+    status: "Live",
+    statusHint: "Deployed 2026-09-04 — real testbed projects with public rules / RLS off. Firebase Storage deferred (needs Blaze billing).",
+    checks: [
+      { num: 1, name: "Firestore collection publicly readable (User collection, test-mode rules)" },
+      { num: 2, name: "Firebase Realtime Database readable without auth (users node, test-mode rules)" },
+      { num: 3, name: "Firebase Storage bucket publicly accessible — DEFERRED (needs Blaze)" },
+      { num: 4, name: "Supabase table readable without auth (users_public, RLS disabled)" },
+      { num: 5, name: "Supabase Storage bucket publicly accessible (public-uploads, public toggle on)" },
+      { num: 6, name: "Supabase RPC callable by anon (get_public_data, SECURITY INVOKER)" },
+    ],
+  },
 ] as const;
 
 export default function Home() {
@@ -369,6 +384,11 @@ export default function Home() {
 
       {/* Batch 6b — 22 extended-secret fake keys rendered into the bundle. */}
       <Batch6bExtendedSecrets />
+
+      {/* Batch 9 — REAL Firebase + Supabase configs (Phase B). Points to
+          throwaway test projects with public rules; scanner discovers them
+          then probes the real endpoints to confirm they respond without auth. */}
+      <Batch9PhaseBConfigs />
     </main>
   );
 }

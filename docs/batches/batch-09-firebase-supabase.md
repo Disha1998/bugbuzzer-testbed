@@ -3,8 +3,42 @@
 **Category:** BaaS Database Security — Firebase, Supabase, exposed datastores
 **Master sheet rows:** 9, 11, 12, 13, 14, 259, 261
 **BugBuzzer checks tested:** 7
-**Date added to testbed:** _pending_
-**Status:** ⬜ Pending (Phase B)
+**Date added to testbed:** 2026-09-04
+**Status:** 🚀 Live — Firebase 2/3 + Supabase 3/3 wired in; Firebase Storage deferred (needs Blaze billing). Awaiting first scan.
+
+---
+
+## Status at a glance — 2026-09-04
+
+**Batch complete? DEPLOYED, awaiting first scan — 5 of 6 checks wired in**
+
+**Rows firing (expected):** Firestore public read, RTDB public read, Supabase RLS-off table, Supabase public bucket, Supabase anon RPC.
+
+**Open issues:** Firebase Storage deferred (needs Blaze billing). Fix: leave as Phase B; Supabase Storage covers the "public bucket" concept in-scan.
+
+### Firebase side (2 of 3 checks)
+
+- ✅ Project: `bugbuzzer-testbed-fb` (Spark free plan)
+- ✅ Web app registered — config in `lib/phase-b-real-configs.ts`
+- ✅ **Firestore** — `User` collection with fake `alice@fake-testbed.example` doc (test-mode rules, public read/write for 30 days)
+- ✅ **Realtime Database** — `users/1` node with fake alice data (test-mode rules)
+  - URL: `https://bugbuzzer-testbed-fb-default-rtdb.firebaseio.com`
+- ⬜ **Firebase Storage** — **DEFERRED** — Firebase requires Blaze plan (billing enabled) since Nov 2024 to create any storage bucket. Not worth a card for one check; Supabase Storage covers the "public bucket" concept.
+
+### Supabase side (3 of 3 checks)
+
+- ✅ Project: `bugbuzzer-testbed-sb` (Free plan)
+- ✅ URL + anon key in `lib/phase-b-real-configs.ts`
+- ✅ **Table** — `users_public` with **RLS disabled**, 1 fake alice row
+- ✅ **Storage bucket** — `public-uploads` with **Public toggle ON**, 1 fake file uploaded
+- ✅ **RPC function** — `get_public_data` returning fake string, SECURITY INVOKER, anon-callable
+
+### Wiring
+
+- ✅ `lib/phase-b-real-configs.ts` — real Firebase + Supabase configs
+- ✅ `components/batch-9-phase-b-configs.tsx` — renders configs into JSX + inline JSON + window globals
+- ✅ Mounted in `app/page.tsx` at bottom of main
+- ✅ Batch 9 card added to BATCHES array with status "Live"
 
 ---
 
@@ -33,7 +67,7 @@ Both have free tiers. Set up throwaway projects specifically for testing.
 |---|---|---|---|
 | 5 | 11 | Firebase RTDB open (.read) | Set database rules: `{ ".read": true, ".write": false }` |
 | 6 | 12 | Firestore collection publicly readable | Set Firestore rules: `allow read: if true;` on one collection |
-| 7 | 13 | Firebase Storage bucket publicly accessible | Set storage rules to allow public read |
+| 7 | 13 | Firebase Storage bucket publicly accessible | ⬜ **BLOCKED** — Firebase forces Blaze (billing) to create any bucket. Deferred; will re-enable if we ever move testbed billing to Blaze. |
 
 ### Wire into testbed
 
