@@ -1,97 +1,96 @@
-# Batch 2 — Web Hygiene (Headers, Cookies, SSL, SRI)
+# Batch 2 — Web hygiene (headers, cookies, SSL, SRI)
 
-## 📋 Status at a glance — 2026-08-26
+## 📋 Where we are — 2026-08-26
 
-**Batch complete? NO ❌**
-- **7 of 9 rows firing correctly** (77%)
-- **2 open issues (need testbed code fix):**
-  1. **Row 24 — mixed-content-on-https-page** — our `<img src="http://...">` is auto-upgraded by Chrome before the scanner observes it. Fix: switch to `<script src="http://...">` (blocked, not upgraded, leaves a browser-console signal the scanner catches)
-  2. **Row 28 — cors-misconfiguration-overly-permissive** — the `/api/wide-cors` route returns the misconfig correctly but nothing on the main page references it, so the scanner never discovers + tests it. Fix: add `<a href="/api/wide-cors">` link + `fetch("/api/wide-cors")` on-load call
+**Is this batch done? NO ❌**
+- **7 out of 9 checks are working** (77%)
+- **2 open items (need small testbed fixes):**
+  1. **Row 24 — mixed-content-on-https-page** — our `<img src="http://...">` tag gets silently upgraded to `https://` by Chrome before the scanner can see it. Fix: use `<script src="http://...">` instead — Chrome blocks that (doesn't upgrade it) and leaves a console warning the scanner catches.
+  2. **Row 28 — cors-misconfiguration-overly-permissive** — our `/api/wide-cors` endpoint really is broken (we tested it with curl). But nothing on the homepage links to it, so the scanner never visits it. Fix: add an `<a href="/api/wide-cors">` link + a `fetch("/api/wide-cors")` call that runs when the page loads.
 
-Plus **3 rows deferred to Phase B** (SSL cert expiry / domain expiry / subdomain takeover — need Hostinger VPS + throwaway domain). Tracked in [phase-b-backlog.md](../phase-b-backlog.md).
+Plus **3 rows paused for Phase B** (SSL cert expiry / domain expiry / subdomain takeover — need Hostinger VPS + throwaway domain). Tracked in [phase-b-backlog.md](../phase-b-backlog.md).
 
-Last scan: BB-20260826-E71978 (2026-08-26). 15 Batch 2 findings + 18 Batch 1 findings + 4 environmental + 8 lodash CVEs (bonus) = 45 total findings. Full FP/FN audit: no strict false positives.
+Last scan: `BB-20260826-E71978` (2026-08-26). 15 Batch 2 findings + 18 Batch 1 findings + 4 environmental + 8 Lodash CVEs (bonus) = 45 findings total. No false alarms.
 
 ---
 
-
-**Category:** Web Hygiene — headers, cookies, SSL, DNS, SRI
-**Master sheet rows:** 19, 20, 21, 24, 28, 30, 50, 53, 54, 55, 88
-**BugBuzzer checks tested:** 11 total (2 free, 6 add-code, 1 bonus, 3 deferred to Phase B)
-**Branch:** `batch-02-web-hygiene`
-**Date added to testbed:** 2026-08-26
-**Status:** 🟡 In progress — code applied, awaiting first scan on Vercel preview URL
+- **Category:** Web hygiene — headers, cookies, SSL, DNS, SRI
+- **Rows on master sheet:** 19, 20, 21, 24, 28, 30, 50, 53, 54, 55, 88
+- **Checks tested:** 11 total (2 free, 6 need code, 1 bonus, 3 paused for Phase B)
+- **Branch:** `batch-02-web-hygiene`
+- **Deployed on:** 2026-08-26
+- **Status:** 🟡 In progress — code applied, waiting for the next scan
 
 ---
 
 ## What this batch tests
 
-These are "silent" web-hygiene misconfigurations that break browser security or attract attackers. Users don't see them until something goes wrong.
+These are quiet web-hygiene problems that weaken browser security or invite attackers. Users don't see them until something goes wrong.
 
 - Missing security headers (CSP, HSTS, X-Frame-Options, etc.)
-- SSL certificate expiring
-- Domain registration expiring
-- Mixed HTTP content on HTTPS page
+- SSL certificate expiring soon
+- Domain registration expiring soon
+- Mixed HTTP content on an HTTPS page
 - CORS wide open (`Access-Control-Allow-Origin: *`)
-- Missing security.txt
-- Subdomain takeover risk (dangling CNAMEs)
+- Missing `security.txt`
+- Subdomain takeover risk (dangling CNAME records)
 - Cookies missing HttpOnly / Secure / SameSite flags
-- Session tokens with far-future expiry
-- Subresource Integrity (SRI) missing on CDN scripts
+- Session tokens that expire way too far in the future
+- Third-party CDN scripts without SRI (subresource integrity)
 
 ---
 
-## Scope split — 3 buckets
+## Split into 3 buckets
 
-### Bucket A — Already fires for free (no code needed)
+### Bucket A — Fires for free (nothing to add)
 
-| Row | Check | Why it fires without changes |
+| Row | Check | Why it fires without any changes |
 |---|---|---|
-| 19 | security-headers-missing | Vercel default already omits CSP, HSTS-includeSubDomains, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy — check fires 6 sub-findings |
+| 19 | security-headers-missing | Vercel's default doesn't send CSP, HSTS-includeSubDomains, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, or Permissions-Policy — check fires 6 sub-findings |
 | 30 | security-txt-missing-or-expired | Testbed has no `/.well-known/security.txt` |
 
-### Bucket B — Code added in this batch (6 rows + 1 bonus)
+### Bucket B — We added code for this (6 rows + 1 bonus)
 
-| # | Row | Check | How it's introduced |
+| # | Row | Check | What we did |
 |---|---|---|---|
-| 1 | 24 | mixed-content-on-https-page | `<img src="http://example.com/testbed-mixed-content.png">` in `app/page.tsx` (positioned off-screen so it doesn't affect visual layout) |
-| 2 | 28 | cors-misconfiguration-overly-permissive | New route `app/api/wide-cors/route.ts` — reflects incoming `Origin` header AND sets `Access-Control-Allow-Credentials: true` (the classic "arbitrary origin reflection with credentials" bug) |
-| 3 | 53 | session-cookie-missing-http-only | Root `middleware.ts` sets `sessionid=<random>` with no HttpOnly |
-| 4 | 54 | session-cookie-missing-secure | Same cookie, no Secure attribute |
-| 5 | 55 | session-cookie-missing-samesite | Same cookie, no SameSite attribute |
-| 6 | 88 | sri-missing | `<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" async />` in `app/layout.tsx` without `integrity=` attribute |
-| BONUS | — | session-token-insufficient-expiration | Root `middleware.ts` also sets `authtoken=<JWT>` with payload `{"sub":"testbed-user","iat":1735689600,"exp":4102444800}` — `exp` is Jan 1 2100 (~74 years out) |
+| 1 | 24 | mixed-content-on-https-page | Added `<img src="http://example.com/testbed-mixed-content.png">` in `app/page.tsx` (positioned off-screen so it doesn't affect the visual layout) |
+| 2 | 28 | cors-misconfiguration-overly-permissive | Added a new route `app/api/wide-cors/route.ts` that reflects incoming `Origin` headers AND sets `Access-Control-Allow-Credentials: true` (the classic "reflect any origin with credentials" bug) |
+| 3 | 53 | session-cookie-missing-http-only | `middleware.ts` sets `sessionid=<random>` with no HttpOnly flag |
+| 4 | 54 | session-cookie-missing-secure | Same cookie, no Secure flag |
+| 5 | 55 | session-cookie-missing-samesite | Same cookie, no SameSite flag |
+| 6 | 88 | sri-missing | `app/layout.tsx` has `<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" async />` — no `integrity=` attribute |
+| BONUS | — | session-token-insufficient-expiration | Middleware also sets `authtoken=<JWT>` where `exp = 4102444800` (Jan 1 2100 — about 74 years out) |
 
-### Bucket C — Deferred to Phase B (needs infrastructure beyond current Vercel testbed)
+### Bucket C — Paused for Phase B (needs setup we don't have yet)
 
-| Row | Check | Why deferred |
+| Row | Check | Why paused |
 |---|---|---|
-| 20 | ssl-certificate-issues (expiring soon) | Vercel auto-renews SSL certs — cannot force an "expiring soon" state. Needs Hostinger VPS with certbot auto-renew disabled |
-| 21 | domain-registration-expiring-soon | `blockchainhq.xyz` has 443 days until renewal — cannot force imminent expiry without buying a sacrificial domain and waiting ~11 months |
-| 50 | subdomain-takeover | Requires a real dangling CNAME on a domain — actually vulnerable while live, and pointing it at unclaimed cloud resources is risky on the main domain. Needs a throwaway domain |
+| 20 | ssl-certificate-issues (expiring soon) | Vercel auto-renews SSL certs — we can't force an "expiring soon" state. Needs a Hostinger VPS with certbot auto-renew turned off. |
+| 21 | domain-registration-expiring-soon | Our domain has 443 days until renewal — can't force imminent expiry without buying a throwaway domain and waiting ~11 months. |
+| 50 | subdomain-takeover | Requires a real dangling CNAME on a domain — but if it's actually vulnerable while live, and pointing it at unclaimed cloud resources, that's risky on our main domain. Needs a throwaway domain. |
 
 Full setup steps for these 3 are in [`docs/phase-b-backlog.md`](../phase-b-backlog.md).
 
 ---
 
-## Files added / edited in this batch
+## Files we changed for this batch
 
 | File | Change | Rows covered |
 |---|---|---|
 | `middleware.ts` (new, root) | Sets `sessionid` and `authtoken` cookies on every page response | 53, 54, 55, session-token bonus |
-| `app/api/wide-cors/route.ts` (new) | GET + OPTIONS handlers reflecting incoming Origin with credentials | 28 |
-| `app/layout.tsx` (edited) | Unhashed `<script>` from cdn.jsdelivr.net | 88 |
-| `app/page.tsx` (edited) | Off-screen `<img>` with `http://` src | 24 |
+| `app/api/wide-cors/route.ts` (new) | GET + OPTIONS handlers that reflect the incoming Origin with credentials | 28 |
+| `app/layout.tsx` (edited) | Third-party `<script>` from cdn.jsdelivr.net with no integrity hash | 88 |
+| `app/page.tsx` (edited) | Off-screen `<img>` with an `http://` src | 24 |
 
-Zero external dependencies added.
+No new dependencies added.
 
 ---
 
-## Expected BugBuzzer scan results
+## What we expect the scanner to find
 
-When you run BugBuzzer against the Vercel preview URL (or `https://testbed.blockchainhq.xyz/` after merge), you should see these Batch 2 findings on top of Batch 1's ongoing detections:
+When you run BugBuzzer against the testbed, you should see these Batch 2 findings on top of Batch 1's ongoing detections:
 
-| # | Check | Expected finding count | Severity |
+| # | Check | Expected findings | Severity |
 |---|---|---|---|
 | 1 | security-headers-missing | 6 sub-findings (HSTS-includeSubDomains, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy) | 2 high + 3 medium + 1 low |
 | 2 | security-txt-missing-or-expired | 1 | warning |
@@ -103,22 +102,22 @@ When you run BugBuzzer against the Vercel preview URL (or `https://testbed.block
 | 8 | session-token-insufficient-expiration | 1 (authtoken JWT with exp = 2100) | medium |
 | 9 | sri-missing | 1 (lodash.min.js from cdn.jsdelivr.net) | medium |
 
-**Total expected new findings: ~13** on top of Batch 1's 18. Next scan should show ~31 findings from Batch 1+2.
+**Total expected new findings: ~13** on top of Batch 1's 18. Next scan should show ~31 findings from Batch 1 + 2 combined.
 
 ---
 
-## Suggested fix (for real users) — high-level
+## What to tell real users (fix guidance)
 
-For each finding kind, the user-facing report should tell the customer:
+For each finding kind, the scan report should tell the customer:
 
-- **Missing headers** → set the header in their web server / CDN / framework middleware. Give specific values.
-- **Mixed content** → replace `http://` sub-resource URLs with `https://` equivalents.
-- **CORS misconfig** → allowlist specific origins instead of reflecting the incoming Origin; never combine wildcard with credentials.
-- **Cookies missing flags** → set HttpOnly, Secure, SameSite=Lax (or Strict) on session cookies.
-- **JWT far-future exp** → set exp to 15-60 minutes for access tokens; use short-lived access + refresh tokens for longer sessions.
-- **SRI missing** → generate integrity hash for each CDN script/style and add `integrity="sha384-…" crossorigin`.
+- **Missing headers** → add the header in your web server, CDN, or framework middleware. Give specific values.
+- **Mixed content** → replace `http://` sub-resource URLs with `https://` versions.
+- **CORS misconfig** → allow specific origins by name instead of reflecting whatever comes in. Never combine wildcard with credentials.
+- **Cookies missing flags** → set HttpOnly, Secure, and SameSite=Lax (or Strict) on session cookies.
+- **JWT far-future exp** → set `exp` to 15-60 minutes for access tokens. Use short-lived access tokens + refresh tokens for longer sessions.
+- **SRI missing** → generate an integrity hash for each CDN script/style and add `integrity="sha384-…" crossorigin`.
 
-Detailed remediation for each already lives in BugBuzzer's own check code (each check emits its own `remediation` field).
+Detailed fixes for each already live in BugBuzzer's own check code — every check emits its own `remediation` field.
 
 ---
 
@@ -142,11 +141,11 @@ _Fill in after the first Batch 2 scan._
 
 ## Regression watch
 
-If any of these findings stops appearing on a future scan, investigate:
+If any of these findings stops firing on a future scan, check:
 
-- Did Vercel or Next.js start emitting one of the missing security headers by default?
+- Did Vercel or Next.js start sending one of the missing security headers by default?
 - Did the `middleware.ts` matcher change and stop setting cookies?
-- Did the CDN script get removed from layout or SRI accidentally added?
+- Did the CDN script get removed from the layout, or did SRI get added?
 - Did the mixed-content image get removed?
-- Did the `/api/wide-cors` route disappear or the CORS headers get tightened?
-- Did the cookie name change from `sessionid` (breaking session-cookie name recognition)?
+- Did the `/api/wide-cors` route disappear or did the CORS headers get tightened?
+- Did the cookie name change from `sessionid` (which would break the session-cookie recognition)?

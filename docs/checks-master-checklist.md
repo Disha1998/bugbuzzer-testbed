@@ -1,220 +1,222 @@
-# Master Checklist — All 121 BugBuzzer Checks
+# Master checklist — all 121 BugBuzzer checks
 
-**Purpose:** one single place to track every check. Update this whenever a batch is deployed, scanned, or completed. If the totals below ever drop below 121, something got lost — this file is the safety net.
+**What this file is:** one place to see every check we're testing. Update it whenever a batch is deployed, scanned, or finished. If the total below is ever less than 121, something got lost. This file is our safety net.
 
-_Last updated: 2026-09-03 (after Batch 6b first scan)_
+_Last updated: 2026-09-05 (after Batch 9 scan #20)_
 
-> 🎉 **Testbed moved to Hostinger VPS** (2026-09-02) — deployment now at `76.13.179.65` as Docker container behind nginx. No more Vercel bot protection interference. Scan #14 (homepage) found 36 real vulnerabilities, up from ~10 on Vercel. See [hostinger-deployment.md](./hostinger-deployment.md).
+> 🎉 **Testbed is now on Hostinger** (moved 2026-09-02). It runs at IP `76.13.179.65` as a Docker container behind nginx. No more Vercel bot problems. Scan #14 found 36 real problems, up from about 10 on Vercel. See [hostinger-deployment.md](./hostinger-deployment.md).
 >
-> ✅ **Batch 3 now 4/5 verified with full findings** — homepage scan #14 fires `js-exceptions-detected` (with our exact `throw new Error("Intentional test error - Batch 3")` in stack trace), `hydration-errors-detected` (React #418), `failed-network-requests` (our /api/does-not-exist-batch-3), and `js-exception-regression`. Only row 38 (blank-page) still open — page needs to return HTTP 500 or strip layout to trigger the check.
+> ✅ **Batch 3 is now 4 out of 5 working.** Scan #14 caught our fake error, hydration bug, failed API call, and repeat-error check. Only the "blank page" check is still open — the /broken page needs to return HTTP 500 or drop the layout wrap.
 >
-> 🟡 **Batch 4 now 5/8 verified** — env / backup / git / svn / **docker-compose (new!)** all fire. 3 open fixes remaining: source maps (Turbopack), config-files (signature), directory-listing (layout).
+> 🟡 **Batch 4 is now 5 out of 8 working.** .env / backup files / .git / .svn / **docker-compose (new!)** all fire. 3 still open: source maps (Turbopack blocker), config files (needs different response shape), directory listing (Next.js layout wraps it).
 >
-> 🎁 **Bonus wins from Hostinger scan #14** — CVE checks now firing: 2 CISA KEV matches (CVE-2025-55182 Next.js RCE + CVE-2023-44487 Nginx HTTP/2 Rapid Reset), 8 Lodash CVEs, 12 outdated tech-stack CVEs. Server-version-disclosure fires 2 findings (nginx 1.24.0 + `X-Powered-By: Next.js`).
+> 🎁 **Bonus wins from Hostinger scan #14** — CVE checks are firing: 2 CISA KEV hits (a Next.js RCE and a Nginx HTTP/2 attack), 8 old Lodash bugs, 12 general tech-stack CVEs. Server version disclosure fires 2 findings.
+>
+> ✅ **Batch 9 (Firebase + Supabase)** — 2 Firebase checks fire as CRITICAL. 3 Supabase checks look failed but actually the scanner has a bug (Fix P). 1 Firebase check paused (needs credit card).
 
 ## Summary
 
-| Status | Count | Meaning |
+| Status | Count | What it means |
 |---|---|---|
-| ✅ Verified | 66 | Check fires correctly on our testbed (scan confirmed) |
-| 🟡 Open fix | 32 | Check should fire but doesn't yet — needs testbed code tweak (see backlog Fixes B, C, F blocker 2, G row 3, I, K blocker 2, L, M, N) |
-| ⬜ Pending | 0 | All Phase A batches deployed! |
-| ⏸️ Phase B | 23 | Deferred to Phase B (needs VPS / throwaway domain / cloud accounts) — includes `exposed-datastore` |
-| **Total** | **121** | Should equal 121 |
+| ✅ Working | 68 | Check fires correctly on our testbed. Scan proved it. |
+| 🟡 Open fix | 32 | We built the vulnerability but scanner doesn't catch it yet. Small tweaks needed (see Fixes B, C, F blocker 2, G row 3, I, K blocker 2, L, M, N in backlog). |
+| 🟡 Scanner bug | 3 | Vulnerability is really there, we tested by hand. But scanner has a bug that makes it miss them. Waiting on BugBuzzer team (Fix P). |
+| ⏸️ Paused | 18 | Deferred to Phase B or later — needs extra setup (VPS, WordPress install, real cloud account, credit card, etc.). |
+| **Total** | **121** | Should always add up to 121. |
 
-**Countdown:** 66 of 121 verified (55%). Batch 6b first scan added 10 verified (including jwt-weak-signing-secret cracking our weak-signed cookie!). 12 Batch 6b rows need real vendor-format tweaks (Fix N). **Phase A code deployment COMPLETE.** All that remains: work through Fixes B/C/F/G/I/K/L/M/N in one focused session, then Phase B.
+**Progress:** 68 out of 121 working (56%). Batch 6b's first scan added 10 wins (including cracking our weak-signed JWT cookie!). Batch 9 added 2 more. **All Phase A code is deployed.** What's left: work through Fixes B/C/F/G/I/K/L/M/N in one focused session, wait for Nirav on Fix P, then do the remaining Phase B setup.
 
 ## Batch 1 — Secrets in JS Bundle (7 checks)
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `aws-gcp-azure-credentials-in-js-bundle` | ✅ Verified |  |
-| 2 | `github-gitlab-token-in-js-bundle` | ✅ Verified |  |
-| 3 | `hardcoded-jwt-secret-in-js-bundle` | ✅ Verified |  |
-| 4 | `openai-anthropic-api-key-in-js-bundle` | ✅ Verified |  |
-| 5 | `resend-sendgrid-api-key-in-js-bundle` | ✅ Verified |  |
-| 6 | `stripe-secret-key-in-js-bundle` | ✅ Verified |  |
-| 7 | `supabase-service-role-key-in-js-bundle` | ✅ Verified |  |
+| 1 | `aws-gcp-azure-credentials-in-js-bundle` | ✅ Working |  |
+| 2 | `github-gitlab-token-in-js-bundle` | ✅ Working |  |
+| 3 | `hardcoded-jwt-secret-in-js-bundle` | ✅ Working |  |
+| 4 | `openai-anthropic-api-key-in-js-bundle` | ✅ Working |  |
+| 5 | `resend-sendgrid-api-key-in-js-bundle` | ✅ Working |  |
+| 6 | `stripe-secret-key-in-js-bundle` | ✅ Working |  |
+| 7 | `supabase-service-role-key-in-js-bundle` | ✅ Working |  |
 
 ## Batch 2 — Web Hygiene (12 checks)
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `cors-misconfiguration-overly-permissive` | 🟡 Open fix needed |  |
-| 2 | `domain-registration-expiring-soon` | ⏸️ Phase B |  |
-| 3 | `mixed-content-on-https-page` | 🟡 Open fix needed |  |
-| 4 | `security-headers-missing` | ✅ Verified |  |
-| 5 | `security-txt-missing-or-expired` | ✅ Verified |  |
-| 6 | `session-cookie-missing-http-only` | ✅ Verified |  |
-| 7 | `session-cookie-missing-samesite` | ✅ Verified |  |
-| 8 | `session-cookie-missing-secure` | ✅ Verified |  |
-| 9 | `session-token-insufficient-expiration` | ✅ Verified | bonus row added during Batch 2 |
-| 10 | `sri-missing` | ✅ Verified |  |
-| 11 | `ssl-certificate-issues` | ⏸️ Phase B |  |
-| 12 | `subdomain-takeover` | ⏸️ Phase B |  |
+| 1 | `cors-misconfiguration-overly-permissive` | 🟡 Open fix | Need to add a link to /api/wide-cors on the homepage so the scanner finds it. See Fix C. |
+| 2 | `domain-registration-expiring-soon` | ⏸️ Paused |  |
+| 3 | `mixed-content-on-https-page` | 🟡 Open fix | Chrome auto-upgrades our test http:// image. Fix: switch to a `<script>` tag instead. See Fix B. |
+| 4 | `security-headers-missing` | ✅ Working |  |
+| 5 | `security-txt-missing-or-expired` | ✅ Working |  |
+| 6 | `session-cookie-missing-http-only` | ✅ Working |  |
+| 7 | `session-cookie-missing-samesite` | ✅ Working |  |
+| 8 | `session-cookie-missing-secure` | ✅ Working |  |
+| 9 | `session-token-insufficient-expiration` | ✅ Working | bonus row added during Batch 2 |
+| 10 | `sri-missing` | ✅ Working |  |
+| 11 | `ssl-certificate-issues` | ⏸️ Paused |  |
+| 12 | `subdomain-takeover` | ⏸️ Paused |  |
 
 ## Batch 3 — JavaScript Runtime Errors (5 checks)
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `critical-page-blank-or-error` | 🟡 Open fix | Vercel bot blocker resolved (Hostinger). But scan #13 on Hostinger still passed — /broken has 15KB layout wrap, check heuristic sees plenty of content. Fix K blocker 2: return HTTP 500 or strip layout |
-| 2 | `failed-network-requests` | ✅ Verified | Fired on scan #10 pointing at our `/api/does-not-exist-batch-3` (correct) |
-| 3 | `hydration-errors-detected` | ✅ Verified | Fired on scan #10 as React 418 (our `Date.now()` mismatch, correct) |
-| 4 | `js-exception-regression` | ✅ Verified | Fired once (scan #7) when error was new. Correctly passes on later scans (error no longer new). Working as designed |
-| 5 | `js-exceptions-detected` | ✅ Verified | Fired on scan #10 with our exact `throw new Error("Intentional test error - Batch 3")` in the finding |
+| 1 | `critical-page-blank-or-error` | 🟡 Open fix | Vercel bot problem is fixed (thanks to Hostinger). But /broken page still has 15KB of layout HTML, so scanner doesn't think it's broken. Fix K blocker 2: return HTTP 500 or drop the layout. |
+| 2 | `failed-network-requests` | ✅ Working | Fires because our page loads a URL that doesn't exist (/api/does-not-exist-batch-3) |
+| 3 | `hydration-errors-detected` | ✅ Working | Fires as React error #418 (our `Date.now()` trick works) |
+| 4 | `js-exception-regression` | ✅ Working | Fired once when the error was new. Correctly stays silent on later scans (error is no longer new). Working as designed. |
+| 5 | `js-exceptions-detected` | ✅ Working | Fires with our exact error text: `throw new Error("Intentional test error - Batch 3")` |
 
 ## Batch 4 — Public File Exposure (8 checks)
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `backup-files-exposed` | ✅ Verified | Fired 3 findings on scan #10 (backup.sql, db.sql, dump.sql) |
-| 2 | `directory-listing-exposed` | 🟡 Open fix | Passed on scan #10. `/downloads` page renders inside Next.js layout (duplicate `<html>`, `server: Vercel`). See Fix I in backlog |
-| 3 | `env-file-exposed` | ✅ Verified | Fired 4 findings on scan #10 (.env + .env.local + .env.production + .env.development) |
-| 4 | `exposed-config-files` | 🟡 Open fix | Passed on scan #10 despite middleware serving JSON with fake secrets. Check likely needs specific content signature. See Fix G in backlog |
-| 5 | `exposed-docker-compose` | ✅ Verified | Fired 3 findings on Hostinger scan #14 (docker-compose.yml + docker-compose.yaml + compose.yml). Hostinger's nginx serves proper Content-Type where Vercel didn't |
-| 6 | `exposed-source-maps` | 🟡 Open fix | Vercel Protected Sourcemaps toggle now OFF ✅ (blocker 1 done). BUT `.js.map` files return HTTP 404 — Turbopack doesn't emit source maps in production. Fix F blocker 2: add `productionBrowserSourceMaps: true` to `next.config.ts` |
-| 7 | `git-repo-exposed` | ✅ Verified | Fired 2 findings on scan #10 (.git/HEAD + .git/config) |
-| 8 | `svn-repo-exposed` | ✅ Verified | Fired 3 findings on scan #10 (.svn/entries + .svn/wc.db + .svn/format) |
+| 1 | `backup-files-exposed` | ✅ Working | Fires 3 findings (backup.sql, db.sql, dump.sql) |
+| 2 | `directory-listing-exposed` | 🟡 Open fix | Our /downloads page renders inside Next.js layout (has duplicate `<html>` tags). See Fix I. |
+| 3 | `env-file-exposed` | ✅ Working | Fires 4 findings (.env + .env.local + .env.production + .env.development) |
+| 4 | `exposed-config-files` | 🟡 Open fix | Middleware serves JSON with fake secrets but scanner doesn't recognize the pattern. Needs specific content signature. See Fix G. |
+| 5 | `exposed-docker-compose` | ✅ Working | Fires 3 findings (docker-compose.yml + .yaml + compose.yml). Started working after Hostinger move — nginx sends better Content-Type than Vercel did. |
+| 6 | `exposed-source-maps` | 🟡 Open fix | Vercel setting is fixed. But Turbopack doesn't make source map files in production. Fix F blocker 2: add `productionBrowserSourceMaps: true` to `next.config.ts`. |
+| 7 | `git-repo-exposed` | ✅ Working | Fires 2 findings (.git/HEAD + .git/config) |
+| 8 | `svn-repo-exposed` | ✅ Working | Fires 3 findings (.svn/entries + .svn/wc.db + .svn/format) |
 
-## Batch 5 — Auth & Admin Panels (14 checks — 13 deployed, 1 deferred)
+## Batch 5 — Auth & Admin Panels (14 checks — 13 deployed, 1 paused)
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `admin-or-debug-panel-exposed` | ✅ Verified | Fired 3 findings on scan #15 (/admin, /wp-admin, /debug). Also picked up our /debug as an admin panel (bonus overlap) |
-| 2 | `dangerous-http-methods` | ✅ Verified | Fired 3 findings on scan #15 (TRACE + PUT + DELETE all flagged separately from our OPTIONS response) |
-| 3 | `debug-mode-enabled` | 🟡 Open fix | Passed on scan #15. Our /debug + /__debug__ got claimed by admin-panel check instead. Needs specific framework markers (Werkzeug console URL, `__debugger__` JSON endpoint). See Fix L in backlog |
-| 4 | `default-credentials-on-services` | 🟡 Open fix | Skipped on scan #15 — fingerprinted 7 panels but 2 inconclusive. Our /admin form action is `/api/login` (relative URL from panel), scanner may probe login differently. See Fix L |
-| 5 | `exposed-ai-infra` | 🟡 Open fix | Passed on scan #15. Our /langfuse + /mlflow HTML doesn't match check heuristic — needs real Langfuse dashboard URL structure (e.g. specific asset paths, meta tags). See Fix L |
-| 6 | `exposed-datastore` | ⏸️ Phase B | Needs exposed database dashboards on subdomains (elasticsearch/mongodb/adminer via crt.sh enumeration) |
-| 7 | `exposed-dev-tools` | 🟡 Open fix | Passed on scan #15. Storybook check needs specific asset markers (`iframe.html`, `runtime~main.iframe.bundle.js`, `sb-preview`). See Fix L |
-| 8 | `graphql-introspection-enabled` | 🟡 Open fix | Passed on scan #15 — "No GraphQL endpoint detected on target at any probed path". Our GET returns schema; check may want POST with specific error shape on GET. See Fix L |
-| 9 | `host-header-reflection` | 🟡 Open fix | Skipped on scan #15 — check never probed /redirect-home. Needs a user-facing redirect pattern (e.g. `?returnTo=` on a route the scanner discovers). See Fix L |
-| 10 | `missing-rate-limiting-on-login` | ✅ Verified | Fired on scan #15 — scanner sent 30 POSTs to /api/login, no rate limit, no 429, no CAPTCHA |
-| 11 | `oauth-state-parameter-missing` | 🟡 Open fix | Passed on scan #15 — "No OAuth authorization URLs discovered on the page". Our link is in a client component that renders via useEffect fetch; needs SSR-rendered `<a href="https://github.com/login/oauth/authorize?...">`. See Fix L |
-| 12 | `open-redirect-vulnerability` | ✅ Verified | Fired 1 finding on scan #15 — /redirect?url=https://evil.example.com → HTTP 302 with Location: evil.example.com |
-| 13 | `unauthenticated-ai-proxy-endpoint` | 🟡 Open fix | Passed on scan #15. Our /api/ai/chat was discovered (fired unauthenticated-api-endpoint) but not flagged as AI-proxy specifically. Check needs proof of real LLM behavior (response echoing prompt, streaming). See Fix L |
-| 14 | `unauthenticated-api-endpoint` | ✅ Verified | Fired 3 findings on scan #15 (/api/users, /api/graphql, /api/ai/chat all return structured JSON without auth) |
+| 1 | `admin-or-debug-panel-exposed` | ✅ Working | Fires 3 findings (/admin, /wp-admin, /debug). Bonus: our /debug page also gets picked up by this check. |
+| 2 | `dangerous-http-methods` | ✅ Working | Fires 3 findings (TRACE + PUT + DELETE all flagged from our OPTIONS response) |
+| 3 | `debug-mode-enabled` | 🟡 Open fix | Our /debug + /__debug__ pages got claimed by the admin-panel check instead. Needs specific Werkzeug or Django markers. See Fix L. |
+| 4 | `default-credentials-on-services` | 🟡 Open fix | Scanner found 7 panels but 2 couldn't be tested. Our login URL setup may not match what the scanner expects. See Fix L. |
+| 5 | `exposed-ai-infra` | 🟡 Open fix | Our /langfuse + /mlflow pages don't match the check's pattern. Needs real Langfuse or MLflow dashboard structure. See Fix L. |
+| 6 | `exposed-datastore` | ⏸️ Paused | Needs exposed database dashboards on subdomains (elasticsearch/mongodb/adminer). |
+| 7 | `exposed-dev-tools` | 🟡 Open fix | Our Storybook page needs specific asset markers (`iframe.html`, `runtime~main.iframe.bundle.js`). See Fix L. |
+| 8 | `graphql-introspection-enabled` | 🟡 Open fix | Scanner says "no GraphQL endpoint detected." Our response shape doesn't match what the check expects. See Fix L. |
+| 9 | `host-header-reflection` | 🟡 Open fix | Scanner never visits our /redirect-home URL. Needs a URL pattern the scanner actually probes. See Fix L. |
+| 10 | `missing-rate-limiting-on-login` | ✅ Working | Fires because scanner sent 30 login POSTs and got no rate limit, no 429, no CAPTCHA |
+| 11 | `oauth-state-parameter-missing` | 🟡 Open fix | Scanner doesn't see our OAuth link because it's in a client component. Needs to be in the server-rendered HTML. See Fix L. |
+| 12 | `open-redirect-vulnerability` | ✅ Working | Fires because /redirect?url=https://evil.example.com sends HTTP 302 to evil.example.com |
+| 13 | `unauthenticated-ai-proxy-endpoint` | 🟡 Open fix | Scanner found our /api/ai/chat but didn't mark it as AI-specific. Needs response that looks like real OpenAI output. See Fix L. |
+| 14 | `unauthenticated-api-endpoint` | ✅ Working | Fires 3 findings (/api/users, /api/graphql, /api/ai/chat — all return JSON without asking for a password) |
 
 ## Batch 6 — Injection Probes (10 checks — all deployed)
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `ai-endpoint-model-parameter-override` | 🟡 Open fix | Progress on scan #16 — override response echoed sentinel model name. Needs error marker in response (`{"error":{"type":"invalid_request_error","message":"model 'xxx' does not exist"}}`). See Fix M |
-| 2 | `error-based-sql-injection` | 🟡 Open fix | Passed on scan #16 — "no_error=7 across 8 probed params". Our JSON error format doesn't match check heuristic. See Fix M — return plain-text error strings |
-| 3 | `llm-direct-prompt-injection-vulnerable` | 🟡 Open fix | Passed on scan #16 — our "ignore previous" phrases don't match check's exact probe patterns. See Fix M |
-| 4 | `nodejs-eval-code-injection` | 🟡 Open fix | Skipped on scan #16 — "reflected_only=6" — result echoed but not recognized as eval sink. See Fix M |
-| 5 | `os-command-injection` | ✅ Verified | Fired 1 finding on scan #16 — injected shell delay scaled with requested sleep (base 3s→+3001ms, 6s→+6002ms) |
-| 6 | `python-eval-code-injection` | 🟡 Open fix | Same pattern as nodejs-eval — needs different response shape. See Fix M |
-| 7 | `reflected-xss-in-url-parameters` | ✅ Verified | Fired 1 finding on scan #16 — /search?q= confirmed unescaped breakout in html_text context |
-| 8 | `server-side-template-injection` | ✅ Verified | Fired 1 finding on scan #16 — /render?tpl= evaluated scanner's `{{4232*4202}}` → 17768104 in response |
-| 9 | `time-based-blind-sql-injection` | ✅ Verified | Fired 1 finding on scan #16 — /api/user?id= scaling-delay proof confirmed |
-| 10 | `vite-dev-server-file-read` | 🟡 Open fix | Passed on scan #16 — "Vite dev server not detected". Fake /@vite/client + /@fs/* need proper Vite fingerprint headers. See Fix M |
+| 1 | `ai-endpoint-model-parameter-override` | 🟡 Open fix | Almost there — our response echoes the fake model name. Just needs an error marker like `{"error":{"type":"invalid_request_error"}}`. See Fix M. |
+| 2 | `error-based-sql-injection` | 🟡 Open fix | Our JSON error format doesn't match. Fix: return SQL error as plain text. See Fix M. |
+| 3 | `llm-direct-prompt-injection-vulnerable` | 🟡 Open fix | Our detected phrases don't match what the scanner tries. See Fix M. |
+| 4 | `nodejs-eval-code-injection` | 🟡 Open fix | Our result is echoed but not recognized as an eval sink. Needs different response shape. See Fix M. |
+| 5 | `os-command-injection` | ✅ Working | Fires because our /api/shell?cmd= endpoint sleeps for the requested duration (proof of command injection) |
+| 6 | `python-eval-code-injection` | 🟡 Open fix | Same problem as nodejs-eval — needs different response shape. See Fix M. |
+| 7 | `reflected-xss-in-url-parameters` | ✅ Working | Fires because /search?q= reflects input without escaping (HTML injection possible) |
+| 8 | `server-side-template-injection` | ✅ Working | Fires because /render?tpl= evaluates scanner's math expression (proof of template injection) |
+| 9 | `time-based-blind-sql-injection` | ✅ Working | Fires because /api/user?id= delay scales with the requested sleep duration |
+| 10 | `vite-dev-server-file-read` | 🟡 Open fix | Scanner says "Vite dev server not detected." Our fake /@vite/client needs proper Vite headers. See Fix M. |
 
 ## Batch 6b — Extended Secrets (22 checks — all deployed)
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `agentmail-api-key-in-js-bundle` | 🟡 Open fix | Passed on scan #17 — our `agm_live_...` format doesn't match AgentMail's real key regex. See Fix N |
-| 2 | `analytics-provider-keys-in-js-bundle` | ✅ Verified | Fired 3 findings on scan #17 (PostHog personal `phx_` key detected). Mixpanel/Amplitude/Segment formats didn't match |
-| 3 | `auth-provider-keys-in-js-bundle` | 🟡 Open fix | Passed — Auth0 M2M + WorkOS formats don't match. Our Clerk `sk_live_` got detected as **Stripe** instead (false-positive overlap in Stripe check). See Fix N |
-| 4 | `cloud-infra-provider-keys-in-js-bundle` | 🟡 Open fix | Passed — Fly (fo1_) + Render (rnd_) + Railway formats don't match. See Fix N |
-| 5 | `cms-media-provider-keys-in-js-bundle` | ✅ Verified | Fired 6 findings on scan #17 (Contentful CMA + Cloudinary URL). Sanity token didn't match. |
-| 6 | `crm-provider-keys-in-js-bundle` | ✅ Verified | Fired 3 findings on scan #17 (HubSpot PAT `pat-na1-` fired). Salesforce didn't match. |
-| 7 | `database-provider-keys-in-js-bundle` | ✅ Verified | Fired 9 findings on scan #17 (Neon Postgres + MySQL + Mongo connection strings). Bonus: also caught our `sensitive-data-in-initial-payload` DB URLs |
-| 8 | `dev-collab-tokens-in-js-bundle` | 🟡 Open fix | Passed — Linear (lin_api_) + Notion (secret_) + Figma (figd_) formats don't match. See Fix N |
-| 9 | `email-provider-keys-in-js-bundle` | 🟡 Open fix | Passed — Postmark UUID + Mailgun + Brevo + Loops formats don't match. See Fix N |
-| 10 | `generic-public-env-secret-in-js-bundle` | 🟡 Open fix | Passed — check likely wants actual `NEXT_PUBLIC_X="..."` variable declarations, not just strings in JSON. See Fix N |
-| 11 | `jwt-weak-signing-secret` | ✅ Verified | Fired 1 finding on scan #17 — "authtoken JWT signature reproduced offline using publicly-known secret from 103,781-entry wordlist" |
-| 12 | `llm-providers-api-key-in-js-bundle` | ✅ Verified | Fired 6 findings on scan #17 (Groq `gsk_` + Perplexity `pplx-`). Together AI + Replicate `r8_` didn't match. |
-| 13 | `maps-provider-keys-in-js-bundle` | ✅ Verified | Fired 3 findings on scan #17 (Mapbox secret `sk.` fired — even authenticated as live!). Google Maps `AIza` didn't match. |
-| 14 | `netlify-pat-in-js-bundle` | 🟡 Open fix | Passed — our `nfp_...` format doesn't match check regex. See Fix N |
-| 15 | `observability-provider-keys-in-js-bundle` | 🟡 Open fix | Passed — Sentry DSN + Datadog + New Relic (NRAK-) formats don't match. See Fix N |
-| 16 | `payment-provider-keys-in-js-bundle` | 🟡 Open fix | Passed — PayPal secret + Razorpay (rzp_live_) + Square (EAAA) formats don't match. See Fix N |
-| 17 | `realtime-flags-provider-keys-in-js-bundle` | ✅ Verified | Fired 3 findings on scan #17 (LaunchDarkly SDK `sdk-` key fired). Pusher + Ably didn't match. |
-| 18 | `search-provider-keys-in-js-bundle` | 🟡 Open fix | Passed — Algolia admin + Meilisearch master + Typesense admin formats don't match. See Fix N |
-| 19 | `sensitive-data-in-initial-payload` | 🟡 Open fix | Passed — check summary said "no password hashes or credentialed connection strings in server-rendered initial payload". Our DB URLs got picked up by `database-provider-keys` instead. Password hash `$2b$10$...` format didn't match. See Fix N |
-| 20 | `vector-db-keys-in-js-bundle` | 🟡 Open fix | Passed — Pinecone UUID + Weaviate + Qdrant formats don't match. See Fix N |
-| 21 | `voice-ai-keys-in-js-bundle` | ✅ Verified | Fired 2 findings on scan #17 (ElevenLabs `sk_` fired). Deepgram + AssemblyAI didn't match. |
-| 22 | `webhook-urls-in-js-bundle` | ✅ Verified | Fired 4 findings on scan #17 (Slack + Discord webhook URLs both detected) |
+| 1 | `agentmail-api-key-in-js-bundle` | 🟡 Open fix | Our `agm_live_...` format doesn't match AgentMail's real key regex. See Fix N. |
+| 2 | `analytics-provider-keys-in-js-bundle` | ✅ Working | Fires 3 findings (PostHog `phx_` personal key). Mixpanel/Amplitude/Segment formats didn't match. |
+| 3 | `auth-provider-keys-in-js-bundle` | 🟡 Open fix | Auth0 + WorkOS formats don't match. Our Clerk `sk_live_` key got detected as Stripe by mistake (small false positive we accept). See Fix N. |
+| 4 | `cloud-infra-provider-keys-in-js-bundle` | 🟡 Open fix | Fly.io + Render + Railway formats don't match. See Fix N. |
+| 5 | `cms-media-provider-keys-in-js-bundle` | ✅ Working | Fires 6 findings (Contentful CMA + Cloudinary URL). Sanity token didn't match. |
+| 6 | `crm-provider-keys-in-js-bundle` | ✅ Working | Fires 3 findings (HubSpot `pat-na1-`). Salesforce didn't match. |
+| 7 | `database-provider-keys-in-js-bundle` | ✅ Working | Fires 9 findings (Neon Postgres + MySQL + Mongo connection strings). Also picked up our SSR payload DB URLs as bonus. |
+| 8 | `dev-collab-tokens-in-js-bundle` | 🟡 Open fix | Linear + Notion + Figma formats don't match. See Fix N. |
+| 9 | `email-provider-keys-in-js-bundle` | 🟡 Open fix | Postmark + Mailgun + Brevo + Loops formats don't match. See Fix N. |
+| 10 | `generic-public-env-secret-in-js-bundle` | 🟡 Open fix | Check wants real `NEXT_PUBLIC_X="..."` variable declarations, not strings in JSON. See Fix N. |
+| 11 | `jwt-weak-signing-secret` | ✅ Working | Fires — scanner cracked our JWT signed with the weak secret "secret" using a 103,781-entry wordlist. Big win! |
+| 12 | `llm-providers-api-key-in-js-bundle` | ✅ Working | Fires 6 findings (Groq `gsk_` + Perplexity `pplx-`). Together AI + Replicate didn't match. |
+| 13 | `maps-provider-keys-in-js-bundle` | ✅ Working | Fires 3 findings (Mapbox secret `sk.` — even authenticates as live!). Google Maps didn't match. |
+| 14 | `netlify-pat-in-js-bundle` | 🟡 Open fix | Our `nfp_...` format doesn't match. See Fix N. |
+| 15 | `observability-provider-keys-in-js-bundle` | 🟡 Open fix | Sentry DSN + Datadog + New Relic formats don't match. See Fix N. |
+| 16 | `payment-provider-keys-in-js-bundle` | 🟡 Open fix | PayPal + Razorpay + Square formats don't match. See Fix N. |
+| 17 | `realtime-flags-provider-keys-in-js-bundle` | ✅ Working | Fires 3 findings (LaunchDarkly SDK `sdk-` key). Pusher + Ably didn't match. |
+| 18 | `search-provider-keys-in-js-bundle` | 🟡 Open fix | Algolia + Meilisearch + Typesense formats don't match. See Fix N. |
+| 19 | `sensitive-data-in-initial-payload` | 🟡 Open fix | Our DB URLs got picked up by the database check instead. Password hash format didn't match. See Fix N. |
+| 20 | `vector-db-keys-in-js-bundle` | 🟡 Open fix | Pinecone + Weaviate + Qdrant formats don't match. See Fix N. |
+| 21 | `voice-ai-keys-in-js-bundle` | ✅ Working | Fires 2 findings (ElevenLabs `sk_`). Deepgram + AssemblyAI didn't match. |
+| 22 | `webhook-urls-in-js-bundle` | ✅ Working | Fires 4 findings (Slack + Discord webhook URLs both caught) |
 
 ## Batch 7 — WordPress CVEs (Phase B) (6 checks)
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `contact-form-7-db-object-injection-cve-2025-7384` | ⏸️ Phase B |  |
-| 2 | `king-addons-privilege-escalation-cve-2025-8489` | ⏸️ Phase B |  |
-| 3 | `really-simple-security-auth-bypass-cve-2024-10924` | ⏸️ Phase B |  |
-| 4 | `w3-total-cache-rce-cve-2025-9501` | ⏸️ Phase B |  |
-| 5 | `wordpress-core-cve` | ⏸️ Phase B |  |
-| 6 | `wp-automatic-sqli-cve-2024-27956` | ⏸️ Phase B |  |
+| 1 | `contact-form-7-db-object-injection-cve-2025-7384` | ⏸️ Paused | Needs a real WordPress install |
+| 2 | `king-addons-privilege-escalation-cve-2025-8489` | ⏸️ Paused | Needs a real WordPress install |
+| 3 | `really-simple-security-auth-bypass-cve-2024-10924` | ⏸️ Paused | Needs a real WordPress install |
+| 4 | `w3-total-cache-rce-cve-2025-9501` | ⏸️ Paused | Needs a real WordPress install |
+| 5 | `wordpress-core-cve` | ⏸️ Paused | Needs a real WordPress install |
+| 6 | `wp-automatic-sqli-cve-2024-27956` | ⏸️ Paused | Needs a real WordPress install |
 
 ## Batch 8 — Apache CVEs (Phase B) (2 checks)
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `apache-httpd-cve-2024-38476-family` | ⏸️ Phase B |  |
-| 2 | `apache-tomcat-cve-2025-24813` | ⏸️ Phase B |  |
+| 1 | `apache-httpd-cve-2024-38476-family` | ⏸️ Paused | Needs Apache instead of nginx |
+| 2 | `apache-tomcat-cve-2025-24813` | ⏸️ Paused | Needs Apache Tomcat |
 
-## Batch 9 — Firebase + Supabase (Phase B) (6 checks)
+## Batch 9 — Firebase + Supabase (6 checks)
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `firebase-rtdb-readable-without-authentication` | 🚀 Live (2026-09-04) | RTDB `users/1` node at bugbuzzer-testbed-fb, test-mode rules; wired via `lib/phase-b-real-configs.ts` |
-| 2 | `firebase-storage-bucket-publicly-accessible` | ⏸️ Phase B — needs Blaze | Firebase forces Blaze billing since Nov 2024; deferred unless testbed goes paid |
-| 3 | `firestore-collection-publicly-readable` | 🚀 Live (2026-09-04) | Firestore `User` collection at bugbuzzer-testbed-fb, test-mode rules; wired via `lib/phase-b-real-configs.ts` |
-| 4 | `supabase-rpc-callable-by-anon` | 🚀 Live (2026-09-04) | `get_public_data` RPC, SECURITY INVOKER, anon-callable; wired via `lib/phase-b-real-configs.ts` |
-| 5 | `supabase-storage-bucket-publicly-accessible` | 🚀 Live (2026-09-04) | `public-uploads` bucket, Public toggle ON; wired via `lib/phase-b-real-configs.ts` |
-| 6 | `supabase-table-readable-without-authentication` | 🚀 Live (2026-09-04) | `users_public` table, RLS disabled, fake alice row; wired via `lib/phase-b-real-configs.ts` |
+| 1 | `firebase-rtdb-readable-without-authentication` | ✅ Working (CRITICAL) | Scanner asked the database for data with no password. Database gave back `{"users":true}`. Exactly what we wanted. |
+| 2 | `firebase-storage-bucket-publicly-accessible` | ⏸️ Paused | Firebase asks for a credit card to make any storage bucket. Not worth adding a card for one check. |
+| 3 | `firestore-collection-publicly-readable` | ✅ Working (CRITICAL) | Scanner asked Firestore for data with no password. Firestore let it read every collection. Exactly what we wanted. |
+| 4 | `supabase-rpc-callable-by-anon` | 🟡 Scanner bug (Fix P) | We tested by hand — anyone can call `get_public_data` with no password. Scanner didn't try, it just gave up. Waiting on BugBuzzer team. |
+| 5 | `supabase-storage-bucket-publicly-accessible` | 🟡 Scanner bug (Fix P) | Same problem as row 4 — scanner gave up too early. |
+| 6 | `supabase-table-readable-without-authentication` | 🟡 Scanner bug (Fix P) | We tested by hand — anyone can read the `users_public` table with no password. Scanner said "probably safe" without really trying. Waiting on BugBuzzer team. |
 
 ## Batch 10 — AWS S3 (Phase B) (5 checks)
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `aws-s3-bucket-acl-publicly-readable` | ⏸️ Phase B |  |
-| 2 | `aws-s3-bucket-name-leaked-in-js-bundle` | ⏸️ Phase B |  |
-| 3 | `aws-s3-bucket-policy-publicly-readable` | ⏸️ Phase B |  |
-| 4 | `aws-s3-bucket-public-listing-enabled` | ⏸️ Phase B |  |
-| 5 | `aws-s3-bucket-public-write-access` | ⏸️ Phase B |  |
+| 1 | `aws-s3-bucket-acl-publicly-readable` | ⏸️ Paused | Needs a real AWS account + throwaway S3 buckets |
+| 2 | `aws-s3-bucket-name-leaked-in-js-bundle` | ⏸️ Paused | Needs a real AWS account |
+| 3 | `aws-s3-bucket-policy-publicly-readable` | ⏸️ Paused | Needs a real AWS account |
+| 4 | `aws-s3-bucket-public-listing-enabled` | ⏸️ Paused | Needs a real AWS account |
+| 5 | `aws-s3-bucket-public-write-access` | ⏸️ Paused | Needs a real AWS account |
 
 ## Environmental — DNS / email / availability (fires from BigRock + Vercel defaults, verified in every scan) (8 checks)
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `dkim-record-missing` | ✅ Verified | no email set up on domain |
-| 2 | `dmarc-missing-or-policy-none` | ✅ Verified | existing DMARC has p=none |
-| 3 | `dnssec-not-configured` | ✅ Verified | fires from BigRock DNS default |
-| 4 | `server-version-disclosure` | ✅ Verified | Hostinger nginx sends `Server: nginx/1.24.0 (Ubuntu)` + `X-Powered-By: Next.js` → check fires 2 findings (verified scan #14) |
-| 5 | `site-listed-on-blacklists` | ✅ Verified | testbed not on any blacklist |
-| 6 | `site-returning-error-status` | ✅ Verified | testbed returns 200 |
-| 7 | `site-unreachable` | ✅ Verified | testbed responds to baseline |
-| 8 | `spf-record-missing-or-permissive` | ✅ Verified | no SPF record |
+| 1 | `dkim-record-missing` | ✅ Working | We don't have email set up on the domain |
+| 2 | `dmarc-missing-or-policy-none` | ✅ Working | Existing DMARC record has `p=none` (no enforcement) |
+| 3 | `dnssec-not-configured` | ✅ Working | Fires because BigRock's DNS default doesn't turn on DNSSEC |
+| 4 | `server-version-disclosure` | ✅ Working | Hostinger nginx sends `Server: nginx/1.24.0 (Ubuntu)` + `X-Powered-By: Next.js` — check fires 2 findings |
+| 5 | `site-listed-on-blacklists` | ✅ Working | Testbed is not on any blacklist (correct, it's a fresh domain) |
+| 6 | `site-returning-error-status` | ✅ Working | Testbed returns HTTP 200 (correct) |
+| 7 | `site-unreachable` | ✅ Working | Testbed responds to the baseline request (correct) |
+| 8 | `spf-record-missing-or-permissive` | ✅ Working | No SPF record on the domain |
 
-## CVE probes — tech-stack version checks (fire opportunistically based on detected tech) (16 checks)
+## CVE probes — tech-stack version checks (fire based on detected tech) (16 checks)
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `cisa-kev-catalog-match` | ✅ Verified | runs on every scan, no KEV entries match our stack |
-| 2 | `cve-2025-29927-nextjs-middleware-auth-bypass` | ✅ Verified | Next.js version check |
-| 3 | `cve-2025-55183-nextjs-app-router-source-code-exposure` | ✅ Verified | Next.js version check |
-| 4 | `cve-2025-55184-nextjs-app-router-dos` | ✅ Verified | Next.js version check |
-| 5 | `cve-2025-57822-nextjs-middleware-header-ssrf` | ✅ Verified | Next.js version check |
-| 6 | `generic-cve-detection` | ✅ Verified | runs on every scan |
-| 7 | `inngest-cve-2026-42047` | ✅ Verified | Inngest probe |
-| 8 | `langflow-cve-2025-3248` | ✅ Verified | Langflow probe, not applicable to our stack |
-| 9 | `langflow-cve-2025-34291` | ✅ Verified | Langflow probe |
-| 10 | `langflow-cve-2026-33017` | ✅ Verified | Langflow probe |
-| 11 | `n8n-cve-2026-21858` | ✅ Verified | n8n probe |
-| 12 | `nextjs-image-optimization-ssrf` | ✅ Verified | Next.js version check |
-| 13 | `nextjs-react19-rce-detected` | ✅ Verified | React 19 version check |
-| 14 | `nextjs-server-actions-exposed-public-endpoints` | ✅ Verified | Next.js Server Actions check |
-| 15 | `outdated-js-library-cve` | ✅ Verified | fired 8 lodash CVEs on scan #5 (bonus from our CDN script) |
-| 16 | `outdated-tech-stack-cve` | ✅ Verified | runs on every scan |
+| 1 | `cisa-kev-catalog-match` | ✅ Working | Fires 2 findings on our stack (Next.js RCE + Nginx HTTP/2) |
+| 2 | `cve-2025-29927-nextjs-middleware-auth-bypass` | ✅ Working | Next.js version check fires |
+| 3 | `cve-2025-55183-nextjs-app-router-source-code-exposure` | ✅ Working | Next.js version check fires |
+| 4 | `cve-2025-55184-nextjs-app-router-dos` | ✅ Working | Next.js version check fires |
+| 5 | `cve-2025-57822-nextjs-middleware-header-ssrf` | ✅ Working | Next.js version check fires |
+| 6 | `generic-cve-detection` | ✅ Working | Runs on every scan |
+| 7 | `inngest-cve-2026-42047` | ✅ Working | Inngest probe (not applicable to us, correct) |
+| 8 | `langflow-cve-2025-3248` | ✅ Working | Langflow probe (not applicable to us, correct) |
+| 9 | `langflow-cve-2025-34291` | ✅ Working | Langflow probe (not applicable to us, correct) |
+| 10 | `langflow-cve-2026-33017` | ✅ Working | Langflow probe (not applicable to us, correct) |
+| 11 | `n8n-cve-2026-21858` | ✅ Working | n8n probe (not applicable to us, correct) |
+| 12 | `nextjs-image-optimization-ssrf` | ✅ Working | Next.js version check |
+| 13 | `nextjs-react19-rce-detected` | ✅ Working | React 19 version check fires as CRITICAL (KEV listed) |
+| 14 | `nextjs-server-actions-exposed-public-endpoints` | ✅ Working | Next.js Server Actions check |
+| 15 | `outdated-js-library-cve` | ✅ Working | Fires 8 Lodash CVEs (bonus from our CDN script) |
+| 16 | `outdated-tech-stack-cve` | ✅ Working | Runs on every scan, fires 12 findings |
 
 ---
 
 ## How to use this file
 
-- **After every scan:** update the status of any check that changed (Pending → Verified when it fires, etc)
-- **After every batch merge to main:** flip that batch's rows from Pending to Verified (if scan confirmed) or Open Fix (if it didn't fire)
-- **At the end of Phase A:** the sum should be 121. If it's not, some checks got lost. Search the code registry for missing keys.
-- **When starting Phase B:** work through every ⏸️ row using the recipes in [phase-b-backlog.md](./phase-b-backlog.md)
+- **After every scan:** update the status of any check that changed (Pending → Working when it fires, etc.)
+- **After every batch merge to main:** flip that batch's rows to ✅ Working (if scan confirmed) or 🟡 Open fix (if it didn't fire)
+- **At the end of Phase A:** the total should be 121. If it's not, some checks got lost. Search the code registry for missing IDs.
+- **When starting Phase B:** work through every ⏸️ row using the steps in [phase-b-backlog.md](./phase-b-backlog.md)

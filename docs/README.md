@@ -1,63 +1,63 @@
-# BugBuzzer Testbed — Documentation
+# BugBuzzer Testbed — Docs
 
-This project deliberately embeds security vulnerabilities to test the BugBuzzer scanner. Each batch of vulnerabilities is documented so we can verify BugBuzzer detects them correctly.
+This is our test website. We put fake security problems on it on purpose. Then we run the BugBuzzer scanner and check if it finds all of them. Every set of fake problems is called a "batch," and every batch has its own notes file.
 
-**Live testbed URL:** https://testbed.blockchainhq.xyz — deployed on **Hostinger VPS** (`76.13.179.65`) since 2026-09-02 as a Docker container behind nginx. See [hostinger-deployment.md](./hostinger-deployment.md).
+**Live website:** https://testbed.blockchainhq.xyz — runs on our Hostinger server (`76.13.179.65`) since 2026-09-02. It's a Docker container behind nginx. Full setup steps in [hostinger-deployment.md](./hostinger-deployment.md).
 
 ---
 
 ## Batches
 
-Progress through the master sheet's 121 checks, one small batch at a time.
+We work through the master list of 121 checks in small batches so nothing gets missed.
 
-| Batch | Category | Checks | Status | Doc |
+| Batch | What it tests | # of checks | Where we are | Notes file |
 |---|---|---|---|---|
-| 1 | Secrets in JS bundle (core 7) | 7 | ✅ Complete (scan #4, 7/7 detected) | [batch-01](./batches/batch-01-secrets-in-js-bundle.md) |
-| 2 | Web hygiene (headers, cookies, SSL, SRI) | 11 | 🟠 Partial — 7/9 verified · 2 open fixes · 3 deferred to Phase B | [batch-02](./batches/batch-02-web-hygiene.md) |
-| 3 | JavaScript runtime errors | 5 | ✅ 4/5 verified on Hostinger scan #14 · row 38 needs page fix (Fix K) | [batch-03](./batches/batch-03-js-runtime-errors.md) |
-| 4 | Public file exposure | 8 | 🟠 Partial — 5/8 verified on Hostinger · 3 open fixes (F/G-row3/I) | [batch-04](./batches/batch-04-public-file-exposure.md) |
-| 5 | Auth & admin panels | 14 | 🟠 Partial — 5/13 verified on scan #15 · 8 open fixes (Fix L) · 1 Phase B | [batch-05](./batches/batch-05-auth-admin-panels.md) |
-| 6 | Injection probes (SSTI, XSS, SQLi, eval, LLM, Vite) | 10 | 🟠 Partial — 4/10 verified on scan #16 · 6 open fixes (Fix M) | [batch-06](./batches/batch-06-injection-probes.md) |
-| 6b | Extended secrets (V6 bundle + AI + webhooks) | 22 | 🟠 Partial — 10/22 verified on scan #17 · 12 open fixes (Fix N) | [batch-06b](./batches/batch-06b-extended-secrets.md) |
-| 7 | WordPress (needs separate WP install) | 7 | ⬜ Phase B | [batch-07](./batches/batch-07-wordpress-cves.md) |
-| 8 | Apache CVEs (needs separate VPS) | 2 | ⬜ Phase B | [batch-08](./batches/batch-08-apache-cves.md) |
-| 9 | Firebase + Supabase (real cloud) | 6 | 🚀 Live (2026-09-04) — 5 checks wired · Firebase Storage deferred (Blaze) | [batch-09](./batches/batch-09-firebase-supabase.md) |
-| 10 | AWS S3 (real buckets) | 4 | ⬜ Phase B | [batch-10](./batches/batch-10-aws-s3.md) |
+| 1 | Secrets left in the JavaScript bundle (main 7) | 7 | ✅ Done — all 7 work | [batch-01](./batches/batch-01-secrets-in-js-bundle.md) |
+| 2 | Web hygiene (headers, cookies, SSL, SRI) | 11 | 🟠 Partly working — 7 done, 2 need small fixes, 3 paused for Phase B | [batch-02](./batches/batch-02-web-hygiene.md) |
+| 3 | JavaScript errors on page load | 5 | ✅ 4 out of 5 work · 1 needs a page fix (see Fix K) | [batch-03](./batches/batch-03-js-runtime-errors.md) |
+| 4 | Files that should not be public | 8 | 🟠 Partly working — 5 done, 3 need fixes (see Fix F, G, I) | [batch-04](./batches/batch-04-public-file-exposure.md) |
+| 5 | Admin panels + auth problems | 14 | 🟠 Partly working — 5 done, 8 need small tweaks (see Fix L), 1 paused | [batch-05](./batches/batch-05-auth-admin-panels.md) |
+| 6 | Injection problems (XSS, SQLi, eval, template, etc.) | 10 | 🟠 Partly working — 4 done, 6 need small tweaks (see Fix M) | [batch-06](./batches/batch-06-injection-probes.md) |
+| 6b | More secrets (AI providers, webhooks, more categories) | 22 | 🟠 Partly working — 10 done, 12 need vendor format tweaks (see Fix N) | [batch-06b](./batches/batch-06b-extended-secrets.md) |
+| 7 | WordPress problems (needs real WordPress install) | 7 | ⏸️ Paused for Phase B | [batch-07](./batches/batch-07-wordpress-cves.md) |
+| 8 | Apache problems (needs Apache instead of nginx) | 2 | ⏸️ Paused for Phase B | [batch-08](./batches/batch-08-apache-cves.md) |
+| 9 | Firebase + Supabase (real cloud) | 6 | 🟠 Partly working — 2 Firebase checks work as CRITICAL. 3 Supabase checks are stuck because of a scanner bug (see Fix P). 1 paused (needs credit card). | [batch-09](./batches/batch-09-firebase-supabase.md) |
+| 10 | AWS S3 buckets (needs real AWS account) | 5 | ⏸️ Paused for Phase B | [batch-10](./batches/batch-10-aws-s3.md) |
 
-**Phase A total (Batches 1-6b):** ~72 checks — all live in this single Next.js app.
-**Phase B total (Batches 7-10 + deferred rows):** ~20-25 checks — need additional targets (Hostinger VPS, WordPress, throwaway domain, cloud accounts). Tracked in [`phase-b-backlog.md`](./phase-b-backlog.md).
-
----
-
-## Phase A / Phase B strategy
-
-We split testing into two phases to avoid infrastructure setup overhead per batch:
-
-- **Phase A (current)** — all checks that fit on this single Next.js/Vercel testbed. Fast iteration, one deploy per push, no external accounts needed. Runs through Batches 1-6b.
-- **Phase B (later)** — one focused session with real infrastructure. Sets up Hostinger VPS + one throwaway domain + cloud accounts, then knocks out rows from multiple batches at once (Batch 2 rows 20/21/50 + Batches 7/8/9/10 + any deferred rows we hit along the way).
-
-Every row deferred from Phase A gets logged to [`phase-b-backlog.md`](./phase-b-backlog.md) with resource-specific setup steps. Nothing is skipped forever — deferred just means "batched with other rows that need the same setup".
+**Phase A total (Batches 1-6b):** about 72 checks. All of these live on this one Next.js website.
+**Phase B total (Batches 7-10 + some rows we paused from earlier):** about 20-25 checks. These need extra setup — a WordPress install, an Apache server, cloud accounts, etc. All the paused rows are tracked in [`phase-b-backlog.md`](./phase-b-backlog.md).
 
 ---
 
-## Other docs
+## Why we split things into Phase A and Phase B
 
-- [**Master checklist**](./checks-master-checklist.md) — **all 121 checks in one file**, with status per check. Read this first to see what's done, pending, or missing
-- [**Testbed fixes backlog**](./testbed-fixes-backlog.md) — **every open fix across all batches, prioritized with steps + verification**. Read before every fix session
-- [Scan log](./scan-log.md) — every scan run + result
-- [Testing guide](./testing-guide.md) — how to run BugBuzzer against this testbed + branch-per-batch workflow
-- [Phase B backlog](./phase-b-backlog.md) — every deferred row with resource-specific setup steps
-- [How to verify manually](./how-to-verify-manually.md) — 5 independent ways to prove the testbed is scanner-ready (no need to trust Claude)
-- [Safety notes](./safety.md) — do-not-abuse warnings, fake-data rules
-- [Scan issues](./scan-issues/) — per-scan failure analysis + evidence packs
+Because it's much faster.
+
+- **Phase A (what we're mostly doing now):** every check that fits on one Next.js website. One push, one deploy, no extra accounts needed. Covers Batches 1-6b.
+- **Phase B (comes later):** one focused session where we set up all the extra infrastructure (VPS, WordPress, throwaway domain, cloud accounts) at once. Then we knock out a bunch of Phase B rows together instead of one at a time.
+
+Every check we push to Phase B gets a note in [`phase-b-backlog.md`](./phase-b-backlog.md) with the setup steps needed. Nothing is skipped forever — "paused" just means "we'll do it when we have the other Phase B stuff set up."
 
 ---
 
-## Status legend
+## Other important files
 
-- ⬜ Pending — batch not started
-- 🚀 Live — deployed to testbed, awaiting first scan
-- 🟠 Partial — some rows verified, some rows have known open fixes in [testbed-fixes-backlog.md](./testbed-fixes-backlog.md)
-- 🔴 Blocked — deployed but scan cannot verify due to external issue (e.g., scanner is blocked from reaching the site)
-- ✅ Complete — all checks in the batch detected correctly (100% pass on latest scan)
-- 🟣 Regression — a previously-passing check has started failing
+- [**Master checklist**](./checks-master-checklist.md) — **all 121 checks in one place**, with the current status of each. Read this first to see what's done and what's not.
+- [**Fixes backlog**](./testbed-fixes-backlog.md) — **every open problem, sorted by priority, with steps to fix**. Read this before you sit down to fix things.
+- [Scan log](./scan-log.md) — every scan we've run, with the result
+- [Testing guide](./testing-guide.md) — how to run BugBuzzer against this testbed + our branch workflow
+- [Phase B backlog](./phase-b-backlog.md) — every paused check with setup steps
+- [How to verify manually](./how-to-verify-manually.md) — 5 ways to prove the testbed is set up right without trusting Claude
+- [Safety notes](./safety.md) — don't-abuse warnings, fake-data rules
+- [Scan issues](./scan-issues/) — per-scan analysis and evidence
+
+---
+
+## What the status words mean
+
+- ⬜ Pending — we haven't started this batch yet
+- 🚀 Live — code is pushed and deployed, waiting for the first scan
+- 🟠 Partly working — some checks work, some still need small fixes (all fixes tracked in [testbed-fixes-backlog.md](./testbed-fixes-backlog.md))
+- 🔴 Blocked — code is deployed but the scanner can't reach it (e.g., something is blocking the scan)
+- ✅ Done — every check in the batch works correctly on the latest scan
+- 🟣 Went backwards — a check that used to work is now failing (needs a look)

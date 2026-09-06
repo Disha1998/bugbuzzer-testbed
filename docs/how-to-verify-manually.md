@@ -1,22 +1,22 @@
-# How to Verify Manually — Prove the Testbed Is Correct Yourself
+# How to check the testbed by hand — prove it's set up right yourself
 
-You do not have to trust anything Claude says. Every claim below can be checked by hand in under 10 minutes with just a browser and a terminal.
+You don't have to trust anything Claude says. Every claim below can be checked by hand in under 10 minutes using just a browser and a terminal.
 
-The question this doc answers: **"Are the fake keys really in the deployed bundle, and would BugBuzzer's real regex patterns detect them?"**
+The question this doc answers: **"Are the fake keys really in the deployed bundle, and would BugBuzzer's real patterns catch them?"**
 
 ---
 
-## Method 1 — Browser DevTools (2 minutes, no terminal needed)
+## Method 1 — Browser DevTools (2 minutes, no terminal)
 
 **Goal:** confirm every fake key is really in the JavaScript that ships to a visitor's browser.
 
 1. Open `https://testbed.blockchainhq.xyz/` in Chrome or Firefox
 2. Press **F12** (or right-click → Inspect)
 3. Go to the **Sources** tab
-4. Press **Cmd+F** (Mac) or **Ctrl+F** (Windows) to open the global "Search all files" box
+4. Press **Cmd+F** (Mac) or **Ctrl+F** (Windows) to open the "Search all files" box
 5. Search for each of these strings one at a time:
 
-| Row | Search for this exact string | Expected result |
+| Row | Search for this exact string | What you should see |
 |---|---|---|
 | 1 | `sk-proj-FakeTestbedOpenAI` | Found in a `.js` file under `_next/static/immutable/chunks/` |
 | 1 | `sk-ant-api03-FakeTestbedAnthropic` | Found in a `.js` file |
@@ -29,7 +29,7 @@ The question this doc answers: **"Are the fake keys really in the deployed bundl
 | 7 | `re_FakeTestbedResend` | Found in a `.js` file |
 | 7 | `SG.FakeTestbed1234567890.FakeTestbedSendGridPart2` | Found in a `.js` file |
 
-If all 10 searches return results, **every fake key is definitely in the bundle**. That is what a real scanner would see when it fetches the site.
+If all 10 searches return results, **every fake key is definitely in the bundle**. That's exactly what a real scanner would see.
 
 ---
 
@@ -53,10 +53,10 @@ for url in $JS_URLS; do
   i=$((i+1))
 done
 
-# Concatenate everything into one file
+# Put everything into one file
 cat /tmp/testbed.html /tmp/testbed-chunk-*.js > /tmp/testbed-all.txt
 
-# See total size (should be ~587 KB)
+# See total size (should be about 587 KB)
 wc -c /tmp/testbed-all.txt
 ```
 
@@ -74,15 +74,15 @@ grep -oE '(jwt_secret|nextauth_secret)\s*=\s*"[^"]+"' /tmp/testbed-all.txt  # Ro
 grep -oE 'eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+' /tmp/testbed-all.txt | sort -u  # Row 3 JWT shape
 ```
 
-Each command should print at least one line. If it does, **the fake key is in the bundle in a format that BugBuzzer's regex will catch**.
+Each command should print at least one line. If it does, **the fake key is in the bundle in a format BugBuzzer's regex will catch**.
 
 ---
 
-## Method 3 — Prove BugBuzzer's FULL detection logic fires (10 minutes)
+## Method 3 — Run BugBuzzer's full detection logic yourself (10 minutes)
 
-**Goal:** run BugBuzzer's actual regex patterns AND its placeholder filter AND (for row 5) its entropy check yourself.
+**Goal:** run BugBuzzer's actual regex patterns AND its placeholder filter AND (for row 5) its entropy check, all by hand.
 
-**Why this matters:** regex-only verification is NOT enough. Scan #3 (2026-08-24) proved that our first fake keys all passed the regex but were dropped by BugBuzzer's `looksLikePlaceholder` filter because the values contained the word "Fake". The v2 verification script simulates both layers.
+**Why this matters:** regex-only verification is NOT enough. Scan #3 (2026-08-24) proved that our first fake keys all passed the regex but were dropped by BugBuzzer's "looks like a placeholder" filter because the values had the word "Fake" in them. The v2 script simulates both layers.
 
 The regex patterns live in the main repo at:
 
@@ -98,7 +98,7 @@ To run them against the deployed testbed content:
 node /tmp/verify-fake-keys.mjs
 ```
 
-Expected output (once new placeholder-safe values deployed):
+Expected output (once new placeholder-safe values are deployed):
 
 ```
 | Row | Check | Regex hits | After placeholder filter | Would fire? |
@@ -118,7 +118,7 @@ Totals: 8 would fire, 0 would be dropped by placeholder filter.
   ✅ WOULD FIRE  name=nextauth_secret  len=64  entropy=5.72
 ```
 
-If your run shows the same, **BugBuzzer's full detection pipeline would fire on every fake key**. If any row shows `dropped by placeholder filter`, the value in `lib/fake-secrets.ts` contains a placeholder word (fake / test-key / example / etc.) — regenerate that value.
+If your run shows the same, **BugBuzzer's full detection pipeline would fire on every fake key**. If any row shows "dropped by placeholder filter," the value in `lib/fake-secrets.ts` has a placeholder word in it (fake / test-key / example / etc.) — regenerate that value.
 
 ---
 
@@ -127,7 +127,7 @@ If your run shows the same, **BugBuzzer's full detection pipeline would fire on 
 **Goal:** confirm the fake JWT has both `role: service_role` AND `iss: supabase` in its payload — the two things the Supabase check requires.
 
 ```bash
-# Extract the JWT from the deployed content
+# Get the JWT from the deployed content
 JWT=$(grep -oE 'eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+' /tmp/testbed-all.txt | head -1)
 echo "JWT: $JWT"
 
@@ -142,13 +142,13 @@ Expected output:
 {"role":"service_role","iss":"supabase","ref":"fake-testbed"
 ```
 
-Both `role=service_role` and `iss=supabase` are present. This is what the `supabase-service-role-key-in-js-bundle` check requires in order to fire.
+Both `role=service_role` and `iss=supabase` are there. That's what the `supabase-service-role-key-in-js-bundle` check needs in order to fire.
 
 ---
 
-## Method 5 — Third-party regex tester (browser only, 3 minutes)
+## Method 5 — Online regex tester (browser only, 3 minutes)
 
-If you do not want to touch a terminal at all:
+If you don't want to touch a terminal at all:
 
 1. Go to `https://regex101.com/`
 2. Choose **JavaScript** flavor on the left
@@ -170,11 +170,11 @@ If the site highlights the match, the fake key format is correct.
 
 ## What to do if any method fails
 
-- **Method 1 (DevTools) shows a key is MISSING** → the last testbed deploy did not include that key. Push a new commit to the testbed repo and wait for Vercel to redeploy.
+- **Method 1 (DevTools) shows a key is MISSING** → the last testbed deploy didn't include that key. Push a new commit to the testbed repo and wait for the deploy.
 - **Method 2 (grep) returns nothing** → the key is not in the deployed bundle. Same fix as above.
 - **Method 3 (regex) shows 0 matches for a check** → the fake key format is wrong for that check's regex. Compare the key in `lib/fake-secrets.ts` against the regex in `bundle-secret-extract.ts` and fix the fake key.
-- **Method 4 shows different JWT payload** → deploy did not pick up the latest fake-secrets.ts. Re-push.
-- **Method 5 does not highlight** → regex or test string was pasted with a typo. Try again.
+- **Method 4 shows different JWT payload** → deploy didn't pick up the latest fake-secrets.ts. Re-push.
+- **Method 5 doesn't highlight** → the regex or test string got pasted with a typo. Try again.
 
 ---
 
@@ -182,17 +182,17 @@ If the site highlights the match, the fake key format is correct.
 
 Local regex verification is **weaker** proof than a full end-to-end BugBuzzer scan because:
 
-- It does not test BugBuzzer's bundle-fetching collector (network, timeouts, redirects, SRI, CSP)
-- It does not test BugBuzzer's HTML parser or `<script>` tag discovery
-- It does not test BugBuzzer's Playwright browser collector for JS runtime checks
-- It does not test the check's severity assignment, deduplication, or evidence-packaging code
-- It does not exercise the API pipeline that ships findings to the frontend
+- It doesn't test BugBuzzer's bundle-fetching (network, timeouts, redirects, SRI, CSP)
+- It doesn't test BugBuzzer's HTML parser or `<script>` tag discovery
+- It doesn't test BugBuzzer's headless browser for JS runtime checks
+- It doesn't test the check's severity assignment, dedup, or evidence-packaging code
+- It doesn't exercise the API pipeline that ships findings to the frontend
 
 Local regex verification is **stronger** proof than "trust me" because:
 
 - It uses BugBuzzer's actual regex code (not a rewrite)
 - It runs against the actual deployed bundle (not a local fixture)
 - It gives you a reproducible pass/fail result you can re-run any time
-- It isolates "is the testbed correct?" from "is the scanner infra healthy?"
+- It separates "is the testbed correct?" from "is the scanner working?"
 
-Both types of test are needed. Use local verification to prove the testbed is scanner-ready **before** each real beta scan — this way you know that any beta failure is a real scanner bug, not a testbed setup mistake.
+Both types of test are useful. Use local verification to prove the testbed is scanner-ready **before** each real BugBuzzer scan. That way you know any real scan failure is a real scanner bug, not a testbed setup mistake.

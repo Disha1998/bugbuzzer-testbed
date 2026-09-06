@@ -1,233 +1,210 @@
-# Batch 1 — Secrets & API Keys in JS Bundle
+# Batch 1 — Fake secrets & API keys in the JavaScript bundle
 
-## 📋 Status at a glance — 2026-08-24
+## 📋 Where we are — 2026-08-24
 
-**Batch complete? YES ✅**
-- **7 of 7 rows firing correctly (100%)**
-- **0 open issues**
+**Is this batch done? YES ✅**
+- **All 7 checks are working (100%)**
+- **Nothing open**
 
-Last scan: BB-20260824-5B681D (2026-08-24). 18 total findings across 7 checks. Full analysis in [scan-issues/2026-08-24-scan-04.md](../scan-issues/2026-08-24-scan-04.md).
+Last scan: `BB-20260824-5B681D` (2026-08-24). Scanner found 18 findings across all 7 checks. Full breakdown in [scan-issues/2026-08-24-scan-04.md](../scan-issues/2026-08-24-scan-04.md).
 
 ---
 
-
-**Category:** Secrets & Keys in JS Bundle
-**Master sheet rows:** 1, 2, 3, 4, 5, 6, 7
-**BugBuzzer checks tested:** 7
-**Date added to testbed:** 2026-08-21
-**Status:** ✅ **COMPLETE** — all 7 rows verified end-to-end in scan #4 (2026-08-24, ref BB-20260824-5B681D). 18 findings total across Batch 1 (multi-source detection: each key found in both external chunk and inline script). Zero false negatives. Zero false positives. Ready to move to Batch 2.
+- **Category:** Secrets & API keys leaked in the JavaScript bundle
+- **Rows on the master sheet:** 1, 2, 3, 4, 5, 6, 7
+- **Checks tested:** 7
+- **Deployed on:** 2026-08-21
+- **Status:** ✅ **DONE.** All 7 checks fire on scan #4. 18 findings total (scanner found each key in both the external JS chunk and the inline script). Zero misses. Zero false alarms. Ready to move on.
 
 ---
 
 ## What this batch tests
 
-BugBuzzer scans the compiled JavaScript bundle of a website looking for hardcoded API keys, secrets, and credentials. Developers often paste keys into frontend code by mistake — those keys get bundled into `.js` files that anyone can view in DevTools.
+BugBuzzer looks inside a website's JavaScript files for API keys and secrets. Developers sometimes paste keys directly into their code by mistake. Those keys end up in the JavaScript that ships to every visitor's browser. Anyone can open DevTools and find them.
 
-This batch bakes in 7 fake keys, one for each of the 7 checks in the master sheet.
+This batch puts 7 fake keys on our page — one for each check in the master sheet.
 
 ---
 
-## Vulnerabilities baked in
+## The fake keys we planted
 
-All fake keys live in [`lib/fake-secrets.ts`](../../lib/fake-secrets.ts) and are imported into the client-side page so they get bundled into the JavaScript that ships to the browser.
+All fake keys live in [`lib/fake-secrets.ts`](../../lib/fake-secrets.ts). The file is imported into our page code, so the keys end up in the JavaScript bundle that ships to browsers.
 
-| # | Row | Check Name | Fake Key Type | Where in code |
+| # | Row | Check name | Fake key type | Where |
 |---|---|---|---|---|
-| 1 | 1 | OpenAI / Anthropic API key exposed in JS bundle | `sk-proj-...` and `sk-ant-api03-...` | `lib/fake-secrets.ts` |
+| 1 | 1 | OpenAI / Anthropic API key in JS bundle | `sk-proj-...` and `sk-ant-api03-...` | `lib/fake-secrets.ts` |
 | 2 | 2 | Stripe secret key in JS bundle | `sk_live_...` | `lib/fake-secrets.ts` |
 | 3 | 3 | Supabase service_role key in JS bundle | JWT with `role: service_role` | `lib/fake-secrets.ts` |
 | 4 | 4 | AWS / GCP / Azure credentials in JS bundle | `AKIA...` (AWS Access Key ID) | `lib/fake-secrets.ts` |
-| 5 | 5 | Hardcoded JWT secret in JS bundle | 60+ char random string | `lib/fake-secrets.ts` |
-| 6 | 6 | GitHub / GitLab token in JS bundle | `ghp_...` (GitHub PAT) | `lib/fake-secrets.ts` |
+| 5 | 5 | Hardcoded JWT signing secret in JS bundle | 60+ random characters | `lib/fake-secrets.ts` |
+| 6 | 6 | GitHub / GitLab token in JS bundle | `ghp_...` (GitHub personal access token) | `lib/fake-secrets.ts` |
 | 7 | 7 | Resend / SendGrid email API key in JS bundle | `re_...` and `SG.xxx.yyy` | `lib/fake-secrets.ts` |
 
-⚠️ **All keys are fake.** They match the real format (correct prefix) but have random garbage in the rest of the string. No real service will accept them.
+⚠️ **All keys are fake.** They have the right prefix so the scanner recognizes the format, but the rest is random garbage. No real service will accept them.
 
 ---
 
-## Expected BugBuzzer scan results
+## What we expect the scanner to find
 
 When you run BugBuzzer against `https://testbed.blockchainhq.xyz`, you should see 7 findings (one per fake key type).
 
-| Check # | Expected finding | Severity |
+| Check # | What should fire | Severity |
 |---|---|---|
 | 1 | 1 OpenAI + 1 Anthropic key exposed | Critical |
 | 2 | 1 Stripe live secret key exposed | Critical |
 | 3 | 1 Supabase service_role JWT exposed | Critical |
 | 4 | 1 AWS Access Key ID exposed | Critical |
 | 5 | 1 hardcoded JWT signing secret exposed | Critical |
-| 6 | 1 GitHub Personal Access Token exposed | Critical |
+| 6 | 1 GitHub personal access token exposed | Critical |
 | 7 | 1 Resend key + 1 SendGrid key exposed | High |
 
-If any of the 7 checks does NOT fire, that's a **false negative** — investigate the check code.
-If any check fires with wrong severity or wrong value, that's a **false positive** — tighten the check.
+If any of these 7 doesn't fire, that's a miss — look at the check code.
+If a check fires with the wrong severity or the wrong value, that's a false alarm — tighten the check.
 
 ---
 
-## Suggested fix (for real users)
+## What to tell real users (fix guidance)
 
-If BugBuzzer detects any of these secret leaks in a real user's site, this is the guidance to show them in the scan report.
+If BugBuzzer finds any of these leaks in a real user's site, show them this in the report.
 
 ### The problem
 
-An API key or secret is embedded in your frontend JavaScript. Anyone who visits your site can open browser DevTools, look at the network tab or "view source", find your key, and use it to:
+An API key or secret is in the JavaScript that anyone visiting the site can see. All you have to do is open DevTools, hit "view source," and copy the key. Then you can:
 
-- Run up billing on your account (OpenAI, Anthropic, Stripe, AWS)
-- Send spam or phishing emails from your domain (Resend, SendGrid)
-- Access your private repositories (GitHub)
-- Read and write your entire database (Supabase service_role)
-- Forge authentication tokens (JWT secret)
+- Run up big bills on their account (OpenAI, Anthropic, Stripe, AWS)
+- Send spam or phishing emails from their domain (Resend, SendGrid)
+- Read their private code (GitHub)
+- Read and change their entire database (Supabase service_role)
+- Fake login tokens (JWT secret)
 
 ### The fix
 
 **Never put backend secrets in frontend code.** Instead:
 
-1. Move the secret to your backend / server-side environment variables
-2. Create a backend API endpoint that uses the secret
-3. Call the backend endpoint from your frontend
+1. Put the secret in a backend environment variable
+2. Make a backend API route that uses the secret
+3. Call the backend route from your frontend
 
-**Example — WRONG (secret in frontend):**
-
+**Wrong — secret in frontend:**
 ```typescript
 // pages/index.tsx — DON'T DO THIS
 const openai = new OpenAI({ apiKey: "sk-proj-abc123..." });
 ```
 
-**Example — RIGHT (secret on backend):**
-
+**Right — secret on backend:**
 ```typescript
-// pages/api/chat.ts — server-side API route
+// pages/api/chat.ts — backend API route
 export default async function handler(req, res) {
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  // ... use openai to fulfill the request ...
+  // ... use openai to answer the request ...
 }
 
-// frontend calls the API route — never sees the key
+// frontend just calls the API route — never sees the key
 fetch("/api/chat", { method: "POST", body: JSON.stringify({ ... }) });
 ```
 
-### Immediate action if a real key was leaked
+### If your real key already leaked
 
-1. **Rotate the key immediately** at the provider dashboard (OpenAI, Stripe, GitHub, etc. all have rotation buttons)
-2. Check the provider's billing / usage dashboard for unauthorized activity
-3. Move the new key to a backend environment variable
-4. Redeploy — verify the old key is no longer in your bundle
-5. If billing was abused, contact the provider's support for a refund
+1. **Rotate the key right now** in the provider dashboard (OpenAI, Stripe, GitHub, etc. all have a "roll" or "regenerate" button)
+2. Check the provider's billing / usage page for anything you didn't do
+3. Put the new key in a backend environment variable
+4. Deploy — check that the old key is no longer in your JavaScript
+5. If the bill was abused, contact the provider's support and ask for a refund
 
-### Prevention
+### How to stop it happening again
 
-- Only use `NEXT_PUBLIC_` (Next.js) or `VITE_` (Vite) prefixes for values that are safe to expose in the browser (e.g. Stripe publishable keys, Supabase anon keys)
-- Add secret-scanning to your CI pipeline (GitGuardian, TruffleHog, gitleaks)
+- Only use `NEXT_PUBLIC_` (Next.js) or `VITE_` (Vite) prefixes for things that are safe to be public (like Stripe publishable keys or Supabase anon keys)
+- Add secret scanning to your CI pipeline (GitGuardian, TruffleHog, gitleaks)
 - Add a pre-commit hook that blocks known secret patterns
-- Review pull requests for hardcoded credentials before merging
+- Look for hardcoded credentials in pull requests before merging
 
 ---
 
-## Actual scan results
+## Actual scan results (in order they happened)
 
-### Scan #1 — 2026-08-22 06:40 (BB-20260822-F2846A)
+### Scan #4 — 2026-08-24 04:36 (`BB-20260824-5B681D`) ✅ ALL 7 FIRED
 
-**Root cause:** Testbed bug — Turbopack tree-shook fake keys out of the deployed bundle. Fixed after this scan by rendering keys directly into JSX.
+**Setup:** Testbed was pushed with fresh random fake keys (older values had the word "FakeTestbed" in them, which the scanner filtered out — see scan #3 below). Vercel redeployed. Scanner was healthy.
 
-| Check # | Expected | Actual | Status |
+| Row | Check | Findings | Where |
 |---|---|---|---|
-| 1-7 | Detected | "No X keys detected in the JS bundle" | ❌ Expected — keys weren't in the bundle yet |
+| 1 | openai-anthropic | 4 (2 OpenAI + 2 Anthropic) | main JS chunk + inline script |
+| 2 | stripe-secret | 2 | main JS chunk + inline script |
+| 3 | supabase-service-role | 2 | main JS chunk + inline script (JWT decoded correctly: role=service_role, iss=supabase) |
+| 4 | aws-gcp-azure | 2 (AKIA) | main JS chunk + inline script |
+| 5 | hardcoded-jwt-secret | 2 (jwt_secret + nextauth_secret) | inline script (entropy 5.50 + 5.72) |
+| 6 | github-gitlab | 2 (ghp_) | main JS chunk + inline script |
+| 7 | resend-sendgrid | 4 (2 SendGrid + 2 Resend) | main JS chunk + inline script |
 
-See [scan-issues/2026-08-22-scan-01.md](../scan-issues/2026-08-22-scan-01.md) for full details.
+**Total: 18 Batch 1 findings.** All correctly identified. All correctly redacted. Every finding has enough info (token type, fingerprint, entropy, character types, line:column, surrounding text, live probe result) to hunt down the source in real code.
 
-### Local regex verification — 2026-08-22 (independent of beta scanner)
+**Bonus wins:**
+- Scanner found the same key in multiple places (external chunk + inline script) and reported them separately
+- Scanner did a live probe on each fake key against the real provider API — all correctly came back "already rotated/revoked"
+- Every finding has enough evidence for a real developer to find and fix it
 
-While the beta scanner was blocked on Nirav's VPS CPU issue, we proved the testbed side works by extracting BugBuzzer's actual regex patterns from `packages/check-sdk/src/bundle-secret-extract.ts` and running them locally against the deployed testbed content (HTML + all 7 JS chunks, ~587 KB total).
+**Batch 1 status: ✅ DONE.** Full analysis at [scan-issues/2026-08-24-scan-04.md](../scan-issues/2026-08-24-scan-04.md).
 
-**Result: all 7 Batch 1 rows produce matches on the live deployed bundle.**
+### Scan #3 — 2026-08-24 03:12 (`BB-20260824-F2B412`) — 1 of 7 fired
 
-| Row | Check | Local regex proof (against live deploy) |
-|---|---|---|
-| 1 | OpenAI + Anthropic | ✅ 3 matches each for `sk-proj-…` and `sk-ant-api03-…` |
-| 2 | Stripe secret | ✅ 3 matches for `sk_live_…` |
-| 3 | Supabase service_role JWT | ✅ JWT payload decodes to `{"role":"service_role","iss":"supabase","ref":"fake-testbed"}` — passes the check's `role` + `iss` filter |
-| 4 | AWS AKIA | ✅ 3 matches for `AKIA[A-Z0-9]{16}` |
-| 5 | Hardcoded JWT secret | ✅ Both `jwt_secret` (entropy 5.50) and `nextauth_secret` (entropy 5.72) satisfy the full check: assignment regex + name filter (`JWT_SECRET_NAME_PATTERN`) + length ≥24 + Shannon entropy ≥4.0 |
-| 6 | GitHub PAT | ✅ 3 matches for `ghp_[A-Za-z0-9]{36}` (fake value = exactly 36 chars) |
-| 7 | Resend + SendGrid | ✅ 3 matches each for `re_…` and `SG.…` |
+**Why 6 didn't fire:** Our fake key values had the word "FakeTestbed" in them. BugBuzzer's "looks like a placeholder" filter correctly dropped them (real leaked secrets don't have the word "fake" in them). Row 5 fired because its 64-character random values had no placeholder words.
 
-**Fixes needed to reach this state** (all applied 2026-08-22):
-
-| # | Fix | Reason |
-|---|---|---|
-| 1 | GitHub `ghp_` shortened to exactly 36 chars after prefix (was 48, then 40 by mistake) | Regex is `/\bghp_[A-Za-z0-9]{36}\b/` — needs exact length |
-| 2 | Supabase JWT payload changed from `iss=fake-testbed` → `iss=supabase` | Check requires BOTH `role=service_role` AND `iss=supabase` after decoding |
-| 3 | JWT secret moved from `FAKE_KEYS.jwt_secret` (label "Hardcoded JWT signing secret" — spaces broke regex) to named exports `export const jwt_secret = "..."` and `export const nextauth_secret = "..."` | Check's name filter needs a valid JS identifier matching `jwt_secret`/`nextauth_secret`/etc. |
-| 4 | Inline `<script>` block added with `var jwt_secret = "..."` and `var nextauth_secret = "..."` assignments (64-char high-entropy random values) | Belt-and-suspenders: guarantees the assignment pattern the regex catches, regardless of Turbopack export mangling |
-
-**Verification script:** `/tmp/verify-fake-keys.mjs` (extracted regex, run against `/tmp/all-content.txt` = live HTML + JS chunks).
-
-**What this proves:**
-- Zero real BugBuzzer logic bugs for Batch 1 rows
-- Testbed content is correctly formatted to trigger every check
-- Any Batch 1 false negative in a future beta scan will be **infrastructure** (bundle collector failing to fetch/parse) or a **check code regression**, not a testbed issue
-
-### Scan #4 — 2026-08-24 04:36 (BB-20260824-5B681D) ✅ ALL 7 FIRED
-
-**Setup:** Testbed pushed with regenerated random fake keys (previous "FakeTestbed" values replaced with pure random garbage). Vercel redeployed. Beta scanner healthy (Nirav's fix live).
-
-| Row | Check | Findings | Sources hit |
-|---|---|---|---|
-| 1 | openai-anthropic | 4 (2 OpenAI + 2 Anthropic) | fetchedScripts[4] + inlineScripts[0] |
-| 2 | stripe-secret | 2 | fetchedScripts[4] + inlineScripts[0] |
-| 3 | supabase-service-role | 2 | fetchedScripts[4] + inlineScripts[0]; JWT decoded → `role=service_role, iss=supabase, ref=nvxkucnvfp` |
-| 4 | aws-gcp-azure | 2 (AKIA) | fetchedScripts[4] + inlineScripts[0] |
-| 5 | hardcoded-jwt-secret | 2 (jwt_secret + nextauth_secret) | inlineScripts[1]; entropy 5.50 + 5.72 |
-| 6 | github-gitlab | 2 (ghp_) | fetchedScripts[4] + inlineScripts[0] |
-| 7 | resend-sendgrid | 4 (2 SendGrid + 2 Resend) | fetchedScripts[4] + inlineScripts[0] |
-
-**Total: 18 Batch 1 findings.** All correctly identified, correctly redacted, with rich evidence (token type, fingerprint, entropy, character classes, location line:column, surrounding context, and live-probe result).
-
-**Bonus quality signals verified:**
-- Multi-source detection — same key found in multiple locations, each reported separately
-- Live credential probing — each fake key tested against provider API; all correctly returned "already rotated/revoked"
-- Complete evidence packaging — every finding has enough info to hunt down the source in a real codebase
-
-**Batch 1 status: ✅ COMPLETE.** Full analysis at [scan-issues/2026-08-24-scan-04.md](../scan-issues/2026-08-24-scan-04.md).
-
-### Scan #3 — 2026-08-24 03:12 (BB-20260824-F2B412) — infra fixed, 1 of 7 detected
-
-**Root cause of 6 misses:** Fake key values contained "FakeTestbed" → BugBuzzer's `looksLikePlaceholder` filter correctly dropped them (real leaked secrets don't say "fake"). Row 5 fired because its 64-char random values had no placeholder words.
-
-Fixed same day by regenerating all fake values as pure random strings. Re-tested in scan #4 above.
+Same day we regenerated all fake values as pure random strings. Re-tested in scan #4 (above).
 
 Full analysis at [scan-issues/2026-08-24-scan-03.md](../scan-issues/2026-08-24-scan-03.md).
 
-### Scan #2 — 2026-08-22 09:25 (BB-20260822-24C73A)
+### Scan #2 — 2026-08-22 09:25 (`BB-20260822-24C73A`) — 0 of 7 fired
 
-**Pre-scan verification:** All 8 fake keys confirmed present in the deployed JS bundle via DevTools (Sources → `_next/static/immutable/chunks/1dtxgm_vmxv4-.js` → search matched every key).
+**Why nothing fired:** BugBuzzer's scanner VPS had a CPU problem. The bundle scanner was timing out while fetching our JS files, so it saw an empty bundle and correctly reported "no keys found."
 
-| Check # | Expected | Actual | Status |
-|---|---|---|---|
-| 1 | Detected | "No OpenAI or Anthropic API keys detected in the JS bundle" | ❌ Still not detected |
-| 2 | Detected | "No Stripe secret keys detected in the JS bundle" | ❌ Still not detected |
-| 3 | Detected | "No privileged Supabase keys detected in the JS bundle" | ❌ Still not detected |
-| 4 | Detected | "No AWS, GCP, or Azure credentials detected in the JS bundle" | ❌ Still not detected |
-| 5 | Detected | "No hardcoded JWT secrets detected in the JS bundle" | ❌ Still not detected |
-| 6 | Detected | "No GitHub or GitLab tokens detected in the JS bundle" | ❌ Still not detected |
-| 7 | Detected | "No Resend or SendGrid API keys detected in the JS bundle" | ❌ Still not detected |
+Nirav's team had a fix ready but couldn't deploy it right away. We waited a couple days for scanner #4.
 
-**Overall result:** 0 / 7 detected — same as Scan #1 despite the testbed being fixed.
+Full analysis at [scan-issues/2026-08-22-scan-02.md](../scan-issues/2026-08-22-scan-02.md).
 
-**Root cause:** BugBuzzer scanner VPS CPU is exhausted. Nirav has a performance fix ready but cannot deploy through CI/CD until VPS resources recover. Bundle-static collector very likely timing out fetching JS chunks → returning empty artifacts → checks correctly report "no keys found" on empty input.
+### Scan #1 — 2026-08-22 06:40 (`BB-20260822-F2846A`) — 0 of 7 fired
 
-**Status: BLOCKED on Nirav's infrastructure fix.**
+**Why nothing fired:** Our testbed had a bug — Turbopack (the new Next.js bundler) tree-shook the fake keys out of the deployed bundle. We fixed this by rendering the keys directly into JSX so Turbopack can't remove them.
 
-See [scan-issues/2026-08-22-scan-02.md](../scan-issues/2026-08-22-scan-02.md) for full analysis.
+Full analysis at [scan-issues/2026-08-22-scan-01.md](../scan-issues/2026-08-22-scan-01.md).
+
+### Local check — 2026-08-22 (proving the testbed side works)
+
+While the scanner was blocked on the CPU issue, we proved our testbed was set up correctly by pulling BugBuzzer's actual regex patterns from their source code and running them by hand against our deployed content (HTML + all 7 JS chunks, ~587 KB total).
+
+**Result: all 7 Batch 1 checks matched our content.**
+
+| Row | Check | Local test result |
+|---|---|---|
+| 1 | OpenAI + Anthropic | ✅ 3 matches each for `sk-proj-…` and `sk-ant-api03-…` |
+| 2 | Stripe secret | ✅ 3 matches for `sk_live_…` |
+| 3 | Supabase service_role JWT | ✅ JWT payload decodes correctly |
+| 4 | AWS AKIA | ✅ 3 matches for `AKIA[A-Z0-9]{16}` |
+| 5 | Hardcoded JWT secret | ✅ `jwt_secret` + `nextauth_secret` both pass full check (name filter + length ≥24 + entropy ≥4.0) |
+| 6 | GitHub PAT | ✅ 3 matches for `ghp_[A-Za-z0-9]{36}` (fake value = exactly 36 chars) |
+| 7 | Resend + SendGrid | ✅ 3 matches each for `re_…` and `SG.…` |
+
+**Small fixes we made along the way (all done 2026-08-22):**
+
+| # | Fix | Why |
+|---|---|---|
+| 1 | GitHub `ghp_` shortened to exactly 36 chars after prefix | The check's regex requires exactly 36 chars |
+| 2 | Supabase JWT's `iss` field changed from `fake-testbed` → `supabase` | Check requires BOTH `role=service_role` AND `iss=supabase` |
+| 3 | JWT secret variable renamed to `jwt_secret` (was "Hardcoded JWT signing secret" with spaces — spaces broke the regex) | Check needs a valid JavaScript identifier as the variable name |
+| 4 | Added an inline `<script>` block with `var jwt_secret = "..."` too | Belt-and-suspenders — makes sure the assignment pattern is there no matter how Turbopack mangles the code |
+
+**What this proves:**
+- No real BugBuzzer bugs for Batch 1
+- Our testbed content is set up correctly to trigger every check
+- Any future Batch 1 miss would be either scanner infrastructure (bundle collector failing) or a check code regression — NOT a testbed problem
 
 ---
 
 ## Regression watch
 
-If any of these 7 checks stops detecting on a future scan, that's a regression. Investigate:
+If any of these 7 checks stops firing on a future scan, that's a regression. Things to check:
 
 - Did BugBuzzer's regex or matcher logic change?
 - Did the check code change and break detection?
-- Did the fake key get accidentally moved out of the bundle?
-- Did the Next.js build config change (tree-shaking might have removed unused imports)?
+- Did a fake key accidentally get moved out of the bundle?
+- Did the Next.js build config change (tree-shaking might remove unused imports)?
 - Did the deploy pipeline change and stop shipping the fake keys?
