@@ -28,6 +28,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js" async />
 
       <body className="min-h-full flex flex-col">{children}</body>
+      <footer>
+        <p>Footer</p>
+      </footer>
     </html>
   );
 }
+
+
+// for github automatin I am trying to make a change

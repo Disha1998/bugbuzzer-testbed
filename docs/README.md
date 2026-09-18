@@ -22,7 +22,7 @@ We work through the master list of 121 checks in small batches so nothing gets m
 | 7 | WordPress problems (needs real WordPress install) | 7 | ⏸️ Paused for Phase B | [batch-07](./batches/batch-07-wordpress-cves.md) |
 | 8 | Apache problems (needs Apache instead of nginx) | 2 | ⏸️ Paused for Phase B | [batch-08](./batches/batch-08-apache-cves.md) |
 | 9 | Firebase + Supabase (real cloud) | 6 | 🟠 Partly working — 2 Firebase checks work as CRITICAL. 3 Supabase checks are stuck because of a scanner bug (see Fix P). 1 paused (needs credit card). | [batch-09](./batches/batch-09-firebase-supabase.md) |
-| 10 | AWS S3 buckets (needs real AWS account) | 5 | ⏸️ Paused for Phase B | [batch-10](./batches/batch-10-aws-s3.md) |
+| 10 | AWS S3 buckets (needs paid AWS plan) | 5 | ⏸️ Skipped 2026-09-08 — AWS Free Plan doesn't unlock S3 with public buckets. Come back later with a virtual card. | [batch-10](./batches/batch-10-aws-s3.md) |
 
 **Phase A total (Batches 1-6b):** about 72 checks. All of these live on this one Next.js website.
 **Phase B total (Batches 7-10 + some rows we paused from earlier):** about 20-25 checks. These need extra setup — a WordPress install, an Apache server, cloud accounts, etc. All the paused rows are tracked in [`phase-b-backlog.md`](./phase-b-backlog.md).

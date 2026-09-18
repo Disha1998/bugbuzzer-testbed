@@ -116,11 +116,42 @@ As we work through Batches 3-6b on the current testbed, any extra paused rows la
 
 **Status:** 2 Firebase checks working. 3 Supabase checks stuck on a scanner bug (Fix P in the fixes backlog). 1 Firebase Storage paused (needs credit card).
 
-### Batch 10 — AWS S3 (4 checks)
+### Batch 10 — AWS S3 (5 checks) — TRIED 2026-09-08, SKIPPED
 
-**What we need:** AWS account (need to create one if you don't have it)
+**What we need:** AWS account with a **paid plan** (not Free Plan) + a low-limit virtual card
 
-**Notes:** each check needs a specific S3 bucket misconfig (public listing on, public write, public read ACL, public read policy).
+**What happened when we tried on 2026-09-08:**
+- Disha signed into an existing AWS account
+- AWS put the account on the new "Free Plan" trial ($100 credits, 6 months)
+- Revoked UPI mandate for billing safety
+- Tried to open S3 → blocked. AWS redirected to "Complete registration."
+- Root cause: **AWS Free Plan does not include S3 with public buckets.** AWS wants us to click "Upgrade plan" and add a full paid payment method to unlock S3.
+
+**Why we stopped:** Disha's rule is no rupees spent on this. Free Plan won't unlock S3, and upgrading requires committing to paid billing.
+
+**What we need to unblock this later:**
+1. Get a virtual card with a spending limit (Fi Money, Slice, Jupiter, or bank virtual card) — 10 min setup
+2. Load ₹500 or so on the card (max risk = ₹500)
+3. Add the virtual card to AWS as payment method
+4. Click "Upgrade plan" → paid plan is now safe because virtual card has a hard limit
+5. Create 3 test buckets:
+   - Bucket 1: public write ACL — covers `aws-s3-bucket-public-write-access` + `aws-s3-bucket-public-listing-enabled`
+   - Bucket 2: public ACL grant — covers `aws-s3-bucket-acl-publicly-readable`
+   - Bucket 3: public bucket policy — covers `aws-s3-bucket-policy-publicly-readable`
+6. Add bucket names to `lib/fake-secrets.ts` — covers `aws-s3-bucket-name-leaked-in-js-bundle`
+7. Scan → all 5 checks should fire
+8. Delete all 3 buckets right after testing
+9. Remove virtual card from AWS
+
+**Safety when we come back:**
+- Set AWS billing alerts at $5, $10, $25, $50
+- Set an AWS Budget with a hard cap at $50/month
+- Add `README.txt` inside each bucket saying "TESTBED — safe to delete"
+- Set 7-day auto-delete lifecycle rule on each bucket
+- Check the public-write bucket every day for abuse content
+- Delete all buckets within 24 hours of finishing testing
+
+**Estimated time when we come back:** ~1 hour total (virtual card setup + bucket setup + scan)
 
 ---
 

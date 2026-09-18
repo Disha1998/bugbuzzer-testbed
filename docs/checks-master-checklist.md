@@ -172,11 +172,11 @@ _Last updated: 2026-09-05 (after Batch 9 scan #20)_
 
 | # | Check ID | Status | Notes |
 |---|---|---|---|
-| 1 | `aws-s3-bucket-acl-publicly-readable` | ⏸️ Paused | Needs a real AWS account + throwaway S3 buckets |
-| 2 | `aws-s3-bucket-name-leaked-in-js-bundle` | ⏸️ Paused | Needs a real AWS account |
-| 3 | `aws-s3-bucket-policy-publicly-readable` | ⏸️ Paused | Needs a real AWS account |
-| 4 | `aws-s3-bucket-public-listing-enabled` | ⏸️ Paused | Needs a real AWS account |
-| 5 | `aws-s3-bucket-public-write-access` | ⏸️ Paused | Needs a real AWS account |
+| 1 | `aws-s3-bucket-acl-publicly-readable` | ⏸️ Paused (2026-09-08) | AWS Free Plan doesn't include S3 with public buckets. Needs paid plan or virtual card to unlock. |
+| 2 | `aws-s3-bucket-name-leaked-in-js-bundle` | ⏸️ Paused (2026-09-08) | Could be tested without AWS by adding fake S3 URLs to bundle, but bundled with rest of Batch 10 for now. |
+| 3 | `aws-s3-bucket-policy-publicly-readable` | ⏸️ Paused (2026-09-08) | Same reason as row 1 — needs paid AWS plan. |
+| 4 | `aws-s3-bucket-public-listing-enabled` | ⏸️ Paused (2026-09-08) | Same reason as row 1 — needs paid AWS plan. |
+| 5 | `aws-s3-bucket-public-write-access` | ⏸️ Paused (2026-09-08) | Same reason as row 1 — needs paid AWS plan. |
 
 ## Environmental — DNS / email / availability (fires from BigRock + Vercel defaults, verified in every scan) (8 checks)
 
