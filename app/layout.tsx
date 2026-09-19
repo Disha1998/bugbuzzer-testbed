@@ -30,6 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">{children}</body>
       <footer>
         <p>Footer</p>
+        <p>testing github automation</p>
       </footer>
     </html>
   );
@@ -37,3 +38,4 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 
 
 // for github automatin I am trying to make a change
+// I am trying to make a change
