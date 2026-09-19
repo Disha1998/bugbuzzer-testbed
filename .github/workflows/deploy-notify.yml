@@ -1,0 +1,40 @@
+name: Notify BugBuzzer of deploy
+
+# Purpose: create a GitHub "deployment_status: success" event on every push to main.
+# BugBuzzer's GitHub App listens for that event and fires a scan on the mapped target.
+# Plain push events are ignored by BugBuzzer, which is why this workflow is needed.
+#
+# Note: this workflow does NOT rebuild the testbed container on Hostinger. The scan
+# will see the currently-live testbed content. To also auto-rebuild the container,
+# a separate workflow with SSH secrets is required.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  deployments: write
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start deployment
+        id: start
+        uses: bobheadxi/deployments@v1
+        with:
+          step: start
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: production
+          ref: ${{ github.sha }}
+
+      - name: Mark deploy success
+        uses: bobheadxi/deployments@v1
+        with:
+          step: finish
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: success
+          env: production
+          deployment_id: ${{ steps.start.outputs.deployment_id }}
